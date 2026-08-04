@@ -1,0 +1,17 @@
+{
+  "type": "apoli:action_over_time",
+  "name": "疲れ知らず",
+  "description": "パルクールの動きで満腹度が減らない。",
+  "interval": 20,
+  "entity_action": {
+    "type": "apoli:apply_effect",
+    "effect": {
+      "effect": "parcool:inexhaustible",
+      "duration": 60,
+      "amplifier": 0,
+      "is_ambient": true,
+      "show_particles": false,
+      "show_icon": false
+    }
+  }
+}

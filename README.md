@@ -55,9 +55,10 @@ datapack 自体は有効（`/datapack list enabled` に出る）なのに、職�
 
 | 素性・職業 | 足す | 外す |
 | - | - | - |
-| `origins-classes:miner` | `pacedmultimine:vein_mine`（鉱脈掘り） | — |
-| `origins-classes:explorer` | `pacedmultimine:keen_eye`（見通す目） | `origins-classes:explorer_kit`（開始装備） |
-| `origins:elytrian` | `pacedmultimine:light_armor_iron`（軽装・鉄まで） | `origins:light_armor`（革／チェインまで）／`origins:claustrophobia`（閉所で衰弱＋鈍足） |
+| `origins-classes:miner` | `shiftingorigins:vein_mine`（鉱脈掘り） | — |
+| `origins-classes:explorer` | `shiftingorigins:keen_eye`（見通す目）／`shiftingorigins:tireless`（疲れ知らず） | `origins-classes:explorer_kit`（開始装備） |
+| `origins-classes:cleric` | `shiftingorigins:potion_sharing`（分かち合う祈り） | `origins-classes:better_enchanting`（エンチャ台の本棚パワー +10） |
+| `origins:elytrian` | `shiftingorigins:light_armor_iron`（軽装・鉄まで） | `origins:light_armor`（革／チェインまで）／`origins:claustrophobia`（閉所で衰弱＋鈍足） |
 
 > **エリトリアンの罰則緩和（2026-08-04 ユーザー判断）**: 当部は elytraslot を入れており、
 > **誰でも胸当てと両立してエリトラを装備できる**。その状態でエリトリアンだけが防具制限と
@@ -69,8 +70,31 @@ datapack 自体は有効（`/datapack list enabled` に出る）なのに、職�
 
 - 能力の定義は**この jar の中**（`data/pacedmultimine/powers/`）。datapack に依存しない
 - **上流の定義は書き換えない**（足す／外すだけ）ので、上流が職業の中身を変えても黙って壊れない
-- 配ったことは**ログに出る**（`Dev に pacedmultimine:vein_mine を配った（origins-classes:miner）`）
+- 配ったことは**ログに出る**（`Dev に shiftingorigins:vein_mine を配った（origins-classes:miner）`）
 - 自分が配ったぶんには印（source）を付けてあるので、職業を変えると自分のぶんだけ外れる
+
+### ⚠ 「外す」は効いていない（2026-08-04 実測）
+
+台本 [shifting-origins](../../dev/verify/scenarios/shifting-origins.json) の逆向き判定3本
+（`explorer_kit` / `better_enchanting` / `claustrophobia`）が**2回とも NG**。サーバログ:
+
+```
+[shifting] Dev から origins-classes:explorer_kit を外した（source=origins-classes:explorer / …）
+[shifting] Dev から origins:claustrophobia を外した（source=origins:elytrian / …）
+[shifting] Dev から origins-classes:explorer_kit を外した（…）   ← 毎秒くり返している
+```
+
+`removePower` は呼べており source も正しい（`getSources` で引き直しても同じ値）。
+それでも `power has` は真のまま＝**外した直後に上流が付け直している**。
+**「外す」という手そのものが成立しない。**
+
+**直す方向（未着手）**: 外すのをやめ、**power の定義を無害な内容で datapack から上書きする**。
+同じ回で `so-loading-priority` が OK になり、**`loading_priority` を書けば datapack から
+上書きできる**ことが確定したので、Java を書かずに済む。
+詳細は [selection/origins-vs-convenience-mods-2026-08-04.md](../../selection/origins-vs-convenience-mods-2026-08-04.md) の「3.5 実測で分かったこと」。
+
+⚠ **実害があるのは `claustrophobia` だけ。** 開始装備は「配られない」ことが別途 OK で確認でき
+（`explorer-no-kit`）、`better_enchanting` は EnchantingInfuser に効かないので元から死んでいる。
 
 ## 壊す順番 — 掘った所から繋がりを辿る（幅優先）
 
@@ -131,7 +155,7 @@ cp build/libs/paced_multimine-1.0.0.jar ../../dev/server/mods/
   ⚠ mixin の対象をクラス名の**文字列**で指定していても、**注釈処理の段階で実物が要る**
   （2026-08-04 に無しで組んで `Mixin target ... could not be found` で落ちた）
 - ⚠ **両側に置く**（`mods.toml` も `side=BOTH`）。このMODは Apoli の power 工場
-  （`pacedmultimine:vein_mine`）を**登録する**ので、その登録内容がログイン時に同期される。
+  （`shiftingorigins:vein_mine`）を**登録する**ので、その登録内容がログイン時に同期される。
   片側だけに置くと、持っていない側が `Failed to load registry` で弾かれる（2026-08-04 に実際に踏んだ）
 - ⚠ **`pack.mcmeta` が要る**。無いとクライアントが起動途中で止まる（`Missing metadata in pack`
   という警告が1行出るだけで、原因が非常に分かりにくい）

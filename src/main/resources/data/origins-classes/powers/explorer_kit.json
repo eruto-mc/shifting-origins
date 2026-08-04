@@ -1,0 +1,7 @@
+{
+  "type": "apoli:simple",
+  "loading_priority": 100,
+  "hidden": true,
+  "name": "（当部で無効化）",
+  "description": "開始装備は配られない。代わりに「見通す目」を持つ。"
+}

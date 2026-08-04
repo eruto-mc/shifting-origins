@@ -1,4 +1,4 @@
-package net.erutobusiness.pacedmultimine;
+package net.erutobusiness.shiftingorigins;
 
 import io.github.edwinmindcraft.apoli.api.component.IPowerContainer;
 import java.util.List;
@@ -32,20 +32,33 @@ import org.slf4j.LoggerFactory;
  */
 public final class ClassPowers {
 
-  private static final Logger LOG = LoggerFactory.getLogger("pacedmultimine");
+  private static final Logger LOG = LoggerFactory.getLogger("shiftingorigins");
   /** 誰が配ったかの印。これを source にしておくと、後から自分のぶんだけ外せる。 */
   private static final ResourceLocation SOURCE =
-      new ResourceLocation(PacedMultiMine.MOD_ID, "class_powers");
+      new ResourceLocation(ShiftingOrigins.MOD_ID, "class_powers");
 
-  /** (職業, 足す能力, 外す能力) */
-  private record Rule(String origin, List<String> add, List<String> remove) {
+  /**
+   * (素性・職業, 足す能力)
+   *
+   * <p>⚠ **「外す」は 2026-08-04 に廃止した。** `removePower` は毎秒呼べていて source も
+   * 正しかったのに `power has` が真のままだった＝**上流が付け直していて勝てない**
+   * （台本 shifting-origins の逆向き判定3本が2回とも NG）。
+   * いまは**上流の power の定義そのものを無害な内容で上書きする**
+   * （`data/origins/powers/*.json` に `loading_priority: 100`）。
+   * これは Origins の公式ドキュメントが案内している正規のやり方:
+   * 「Higher numbers mean it's loaded later, which means it will override those with
+   * lower loading priorities which share the same ID」（既定MODの値は 0）。
+   */
+  private record Rule(String origin, List<String> add) {
   }
 
   private static final List<Rule> RULES = List.of(
       new Rule("origins-classes:miner",
-          List.of("pacedmultimine:vein_mine"), List.of()),
+          List.of("shiftingorigins:vein_mine")),
       new Rule("origins-classes:explorer",
-          List.of("pacedmultimine:keen_eye"), List.of("origins-classes:explorer_kit")));
+          List.of("shiftingorigins:keen_eye", "shiftingorigins:tireless")),
+      new Rule("origins-classes:cleric",
+          List.of("shiftingorigins:potion_sharing")));
 
   private ClassPowers() {
   }
@@ -76,19 +89,8 @@ public final class ClassPowers {
           LOG.info("[paced] {} に {} を配った（{}）", player.getGameProfile().getName(), id,
               rule.origin());
         } else if (!isThisClass && has) {
+          // 自分が配ったぶん（source=SOURCE）は自分で外せる。上流が配ったものとは別。
           container.removePower(power, SOURCE);
-        }
-      }
-
-      for (String id : rule.remove()) {
-        ResourceLocation power = new ResourceLocation(id);
-
-        // ⚠ 上流が配ったぶんは source が「その職業」なので、同じ source を指定して外す。
-        //    source は Origins が origin の ID をそのまま使う。
-        if (isThisClass && container.hasPower(power)) {
-          container.removePower(power, new ResourceLocation(rule.origin()));
-          LOG.info("[paced] {} から {} を外した（{}）", player.getGameProfile().getName(), id,
-              rule.origin());
         }
       }
     }

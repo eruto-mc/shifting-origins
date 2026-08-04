@@ -16,7 +16,7 @@ apply plugin: 'org.spongepowered.mixin'
 
 version = '1.0.0'
 group = 'net.erutobusiness'
-base { archivesName = 'paced_multimine' }
+base { archivesName = 'shifting_origins' }
 
 java.toolchain.languageVersion = JavaLanguageVersion.of(17)
 
@@ -29,8 +29,8 @@ minecraft {
 }
 
 mixin {
-    add sourceSets.main, 'pacedmultimine.refmap.json'
-    config 'pacedmultimine.mixins.json'
+    add sourceSets.main, 'shiftingorigins.refmap.json'
+    config 'shiftingorigins.mixins.json'
 }
 
 dependencies {
@@ -49,11 +49,11 @@ dependencies {
 jar {
     manifest {
         attributes([
-            'Specification-Title'   : 'paced_multimine',
+            'Specification-Title'   : 'shifting_origins',
             'Specification-Version' : '1',
-            'Implementation-Title'  : 'Paced Multi Mine',
+            'Implementation-Title'  : 'Shifting Origins',
             'Implementation-Version': project.version,
-            'MixinConfigs'          : 'pacedmultimine.mixins.json'
+            'MixinConfigs'          : 'shiftingorigins.mixins.json'
         ])
     }
 }

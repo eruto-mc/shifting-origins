@@ -1,4 +1,4 @@
-package net.erutobusiness.pacedmultimine;
+package net.erutobusiness.shiftingorigins;
 
 import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -19,10 +19,10 @@ import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
  * {@code ServerPlayerGameMode.destroyBlock} を通すので、ドロップ・経験値・道具の消耗・
  * 他MODのイベントは手掘りとまったく同じに走る。
  */
-@Mod(PacedMultiMine.MOD_ID)
-public final class PacedMultiMine {
+@Mod(ShiftingOrigins.MOD_ID)
+public final class ShiftingOrigins {
 
-  public static final String MOD_ID = "pacedmultimine";
+  public static final String MOD_ID = "shiftingorigins";
 
   /**
    * 鉱脈用の一括破壊 power。Origins Classes の `MultiMinePower` を**そのまま使い、
@@ -40,13 +40,14 @@ public final class PacedMultiMine {
           () -> new dev.limonblaze.originsclasses.common.apoli.power.MultiMinePower(
               OreVeinRange::find));
 
-  public PacedMultiMine() {
+  public ShiftingOrigins() {
     POWER_FACTORIES.register(FMLJavaModLoadingContext.get().getModEventBus());
-    FMLJavaModLoadingContext.get().getModEventBus().addListener(PacedMultiMine::onConfigLoad);
+    FMLJavaModLoadingContext.get().getModEventBus().addListener(ShiftingOrigins::onConfigLoad);
     net.minecraftforge.fml.ModLoadingContext.get()
         .registerConfig(ModConfig.Type.SERVER, Config.SPEC);
     net.minecraftforge.common.MinecraftForge.EVENT_BUS.register(PacedBreakQueue.class);
     net.minecraftforge.common.MinecraftForge.EVENT_BUS.register(ClassPowers.class);
+    net.minecraftforge.common.MinecraftForge.EVENT_BUS.register(PotionSharing.class);
   }
 
   private static void onConfigLoad(final ModConfigEvent event) {
@@ -61,6 +62,9 @@ public final class PacedMultiMine {
     public static final ForgeConfigSpec.IntValue MAX_TOTAL_TICKS;
     public static final ForgeConfigSpec.IntValue MAX_DISTANCE;
     public static final ForgeConfigSpec.IntValue ORE_VEIN_MAX;
+    public static final ForgeConfigSpec.DoubleValue SHARE_RADIUS_H;
+    public static final ForgeConfigSpec.DoubleValue SHARE_RADIUS_V;
+    public static final ForgeConfigSpec.ConfigValue<java.util.List<? extends String>> SHARE_CATEGORIES;
 
     static {
       ForgeConfigSpec.Builder b = new ForgeConfigSpec.Builder();
@@ -86,6 +90,25 @@ public final class PacedMultiMine {
           .comment("Upper bound for the ore vein power added by this mod. The tree felling power",
               "from Origins Classes has its own hard-coded limit of 255 and is not affected.")
           .defineInRange("oreVeinMaxBlocks", 160, 1, 4096);
+      b.comment("Cleric potion sharing. A cleric's drunk potion also reaches nearby players.",
+              "The vanilla anchor is the splash potion, which uses inflate(4.0, 2.0, 4.0) in",
+              "ThrownPotion.applySplash. The defaults here are twice that: a cleric reaches",
+              "further by drinking than anyone reaches by throwing.")
+          .push("potionSharing");
+      SHARE_RADIUS_H = b
+          .comment("Horizontal reach in blocks. Vanilla splash is 4.0.")
+          .defineInRange("radiusHorizontal", 8.0D, 0.0D, 64.0D);
+      SHARE_RADIUS_V = b
+          .comment("Vertical reach in blocks. Vanilla splash is 2.0.")
+          .defineInRange("radiusVertical", 4.0D, 0.0D, 64.0D);
+      SHARE_CATEGORIES = b
+          .comment("Which effect categories get shared: BENEFICIAL, NEUTRAL, HARMFUL.",
+              "HARMFUL is left out by default so that a cleric buffing themselves does not",
+              "poison the people standing next to them. Add it if you want that on purpose.")
+          .defineList("categories", java.util.List.of("BENEFICIAL", "NEUTRAL"),
+              o -> o instanceof String s2
+                  && (s2.equals("BENEFICIAL") || s2.equals("NEUTRAL") || s2.equals("HARMFUL")));
+      b.pop();
       SPEC = b.build();
     }
 

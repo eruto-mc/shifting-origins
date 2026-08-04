@@ -4,45 +4,44 @@ license="MIT"
 issueTrackerURL="https://github.com/erutobusiness"
 
 [[mixins]]
-config="pacedmultimine.mixins.json"
+config="shiftingorigins.mixins.json"
 
 [[mods]]
-modId="pacedmultimine"
+modId="shiftingorigins"
 version="1.0.0"
-displayName="Paced Multi Mine"
+displayName="Shifting Origins"
 authors="erutobusiness"
 description='''
-Makes the Origins Classes multi-mine powers (lumberjack tree felling, and any ore variant added
-by a datapack) break their blocks a few at a time instead of all in the same tick.
+World-3's Origins overhaul. Everything here exists so that origins and classes can be
+CHANGED LATER instead of being a one-time pick at spawn, and so that they still make sense
+next to the 300+ other mods in the pack.
 
-Origins Classes breaks the whole vein in one tick. That is fine for a small tree, but a giant
-jungle tree or a large ore vein disappears instantly, which both looks flat and puts the whole
-cost on a single tick. This mod intercepts the block list the power produces, hands an empty list
-back so nothing is broken immediately, and breaks the blocks itself over the following ticks
-through the player's own mining path, so drops, experience, tool damage and other mods' events
-all behave exactly as they would when mining by hand.
+  * Class/origin powers are handed out and taken away at runtime (ClassPowers), because
+    overriding the upstream JSON definitions from a datapack did not take effect.
+  * The multi-mine powers (lumberjack felling, miner ore vein) break a few blocks at a time
+    instead of all in one tick.
+  * Club-made powers: ore vein mining, keen eye, iron-tier light armor, tireless.
+  * Cleric potion effects spread to nearby players.
 
-⚠ Must be installed on both sides. The mod registers an Apoli power factory
-(pacedmultimine:vein_mine) and Forge synchronises that registry during login, so a client
-without this mod is rejected with "Failed to load registry". The client side itself does
-nothing; the breaking always happens on the server.
+Server side is authoritative, but the mod must be on BOTH sides: it registers Apoli power
+factories, and the registry is synced on login.
 '''
 
-[[dependencies.pacedmultimine]]
+[[dependencies.shiftingorigins]]
     modId="forge"
     mandatory=true
     versionRange="[47,)"
     ordering="NONE"
     side="BOTH"
 
-[[dependencies.pacedmultimine]]
+[[dependencies.shiftingorigins]]
     modId="minecraft"
     mandatory=true
     versionRange="[1.20.1,1.20.2)"
     ordering="NONE"
     side="BOTH"
 
-[[dependencies.pacedmultimine]]
+[[dependencies.shiftingorigins]]
     modId="origins_classes"
     mandatory=true
     versionRange="[1.0,)"

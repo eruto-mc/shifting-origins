@@ -1,7 +1,7 @@
-package net.erutobusiness.pacedmultimine.mixin;
+package net.erutobusiness.shiftingorigins.mixin;
 
 import java.util.List;
-import net.erutobusiness.pacedmultimine.PacedBreakQueue;
+import net.erutobusiness.shiftingorigins.PacedBreakQueue;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.state.BlockState;
@@ -26,7 +26,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public abstract class MultiMinePowerMixin {
 
   @Inject(method = "apply", at = @At("RETURN"), cancellable = true, remap = false)
-  private static void pacedmultimine$queueInsteadOfBreakingNow(
+  private static void shiftingorigins$queueInsteadOfBreakingNow(
       Player player, BlockPos pos, BlockState state,
       CallbackInfoReturnable<List<BlockPos>> cir) {
     List<BlockPos> positions = cir.getReturnValue();

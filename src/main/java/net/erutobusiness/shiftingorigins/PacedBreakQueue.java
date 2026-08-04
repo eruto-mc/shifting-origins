@@ -1,4 +1,4 @@
-package net.erutobusiness.pacedmultimine;
+package net.erutobusiness.shiftingorigins;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -31,7 +31,7 @@ import org.slf4j.LoggerFactory;
  */
 public final class PacedBreakQueue {
 
-  private static final Logger LOG = LoggerFactory.getLogger("pacedmultimine");
+  private static final Logger LOG = LoggerFactory.getLogger("shiftingorigins");
   private static final Map<UUID, Job> JOBS = new HashMap<>();
   /** 自分が壊している最中かどうか。⚠ これが無いと、破壊するたびに power が再び発火して無限に増える。 */
   private static final Set<UUID> BUSY = new HashSet<>();
@@ -51,7 +51,7 @@ public final class PacedBreakQueue {
       return true;
     }
 
-    if (PacedMultiMine.Config.INTERVAL_TICKS.get() <= 0) {
+    if (ShiftingOrigins.Config.INTERVAL_TICKS.get() <= 0) {
       return false;   // 0 なら横取りしない＝上流どおり同じ tick で全部壊れる
     }
     Job job = new Job(serverPlayer, origin, positions);
@@ -102,9 +102,9 @@ public final class PacedBreakQueue {
       this.dimension = player.level().dimension();
       this.tool = player.getMainHandItem().getItem();
       this.remaining = orderFromOrigin(origin, positions);
-      this.interval = PacedMultiMine.Config.INTERVAL_TICKS.get();
+      this.interval = ShiftingOrigins.Config.INTERVAL_TICKS.get();
       this.batch = batchSize(positions.size(), this.interval);
-      int range = PacedMultiMine.Config.MAX_DISTANCE.get();
+      int range = ShiftingOrigins.Config.MAX_DISTANCE.get();
       this.maxDistanceSq = (double) range * range;
       this.cooldown = this.interval;
     }
@@ -164,8 +164,8 @@ public final class PacedBreakQueue {
 
     /** 全体が maxTotalTicks を超えそうなら、1回あたりの個数を上げる。 */
     private static int batchSize(int total, int interval) {
-      int perBatch = PacedMultiMine.Config.BLOCKS_PER_BATCH.get();
-      int budget = PacedMultiMine.Config.MAX_TOTAL_TICKS.get();
+      int perBatch = ShiftingOrigins.Config.BLOCKS_PER_BATCH.get();
+      int budget = ShiftingOrigins.Config.MAX_TOTAL_TICKS.get();
 
       if (budget <= 0 || interval <= 0) {
         return perBatch;

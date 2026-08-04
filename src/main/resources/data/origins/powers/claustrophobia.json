@@ -1,0 +1,7 @@
+{
+  "type": "apoli:simple",
+  "loading_priority": 100,
+  "hidden": true,
+  "name": "（当部で無効化）",
+  "description": "閉所の衰弱は当部では起きない。"
+}

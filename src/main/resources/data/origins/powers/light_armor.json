@@ -1,0 +1,7 @@
+{
+  "type": "apoli:simple",
+  "loading_priority": 100,
+  "hidden": true,
+  "name": "（当部で無効化）",
+  "description": "防具の制限は当部では無い。"
+}

@@ -1,4 +1,4 @@
-package net.erutobusiness.pacedmultimine;
+package net.erutobusiness.shiftingorigins;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -38,7 +38,7 @@ public final class OreVeinRange {
     Set<BlockPos> found = new HashSet<>();
     Queue<BlockPos> queue = new LinkedList<>();
     queue.add(origin);
-    int max = PacedMultiMine.Config.ORE_VEIN_MAX.get();
+    int max = ShiftingOrigins.Config.ORE_VEIN_MAX.get();
 
     while (!queue.isEmpty()) {
       BlockPos cur = queue.remove();
