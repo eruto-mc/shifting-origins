@@ -61,7 +61,6 @@ public final class PacedMultiMine {
     public static final ForgeConfigSpec.IntValue MAX_TOTAL_TICKS;
     public static final ForgeConfigSpec.IntValue MAX_DISTANCE;
     public static final ForgeConfigSpec.IntValue ORE_VEIN_MAX;
-    public static final ForgeConfigSpec.IntValue LEAF_REFRESH_DELAY;
 
     static {
       ForgeConfigSpec.Builder b = new ForgeConfigSpec.Builder();
@@ -87,14 +86,6 @@ public final class PacedMultiMine {
           .comment("Upper bound for the ore vein power added by this mod. The tree felling power",
               "from Origins Classes has its own hard-coded limit of 255 and is not affected.")
           .defineInRange("oreVeinMaxBlocks", 160, 1, 4096);
-      LEAF_REFRESH_DELAY = b
-          .comment("Ticks to wait after the last block of a vein is broken before poking the",
-              "neighbours of every broken position once more, so that a fast-leaf-decay mod",
-              "re-schedules the leaves it gave up on while the rest of the trunk was still",
-              "standing. Those mods only ever schedule a leaf once per notification, and a leaf",
-              "refuses to decay while a log is still within 6 blocks of it, so a paced felling",
-              "loses those schedules and leaves floating leaves behind. -1 disables this.")
-          .defineInRange("leafRefreshDelayTicks", 3, -1, 200);
       SPEC = b.build();
     }
 

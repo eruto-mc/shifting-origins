@@ -11,15 +11,12 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.tags.BlockTags;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import org.slf4j.Logger;
@@ -95,14 +92,10 @@ public final class PacedBreakQueue {
     private final ResourceKey<Level> dimension;
     private final Item tool;
     private final Deque<BlockPos> remaining;
-    /** 実際に壊せた位置。終わったあと葉のMODへ通知を投げ直すのに使う。 */
-    private final List<BlockPos> broken = new ArrayList<>();
     private final int interval;
     private final int batch;
     private final double maxDistanceSq;
     private int cooldown;
-    /** 0以上なら「壊し終わって、葉へ通知を投げ直すまでの残り tick」。-1 は破壊がまだ続いている。 */
-    private int leafRefreshLeft = -1;
 
     private Job(ServerPlayer player, BlockPos origin, List<BlockPos> positions) {
       this.playerId = player.getUUID();
@@ -184,15 +177,6 @@ public final class PacedBreakQueue {
     /** @return 終わった（一覧から外す）なら true */
     private boolean tick(ServerLevel level) {
 
-      if (leafRefreshLeft >= 0) {
-
-        if (leafRefreshLeft-- > 0) {
-          return false;
-        }
-        refreshLeafNeighbours(level);
-        return true;
-      }
-
       if (--cooldown > 0) {
         return false;
       }
@@ -204,8 +188,7 @@ public final class PacedBreakQueue {
       if (player == null || player.isRemoved() || player.isDeadOrDying()
           || !player.level().dimension().equals(dimension)
           || player.getMainHandItem().getItem() != tool) {
-        // 途中でやめても、ここまでに壊したぶんの葉は面倒を見る
-        return finishOrRefresh();
+        return true;
       }
       BUSY.add(playerId);
 
@@ -229,68 +212,13 @@ public final class PacedBreakQueue {
             LOG.info("[paced] 壊せなかった {}（保護MODか採掘条件を疑う）", pos);
             continue;
           }
-          broken.add(pos);
         }
       } finally {
         BUSY.remove(playerId);
       }
 
-      if (remaining.isEmpty()) {
-        return finishOrRefresh();
-      }
-      return false;
+      return remaining.isEmpty();
     }
 
-    /** @return もう用が無ければ true。葉へ投げ直すぶんが残るなら false（次の tick 以降で行う） */
-    private boolean finishOrRefresh() {
-      int delay = PacedMultiMine.Config.LEAF_REFRESH_DELAY.get();
-
-      if (delay < 0 || broken.isEmpty()) {
-        return true;
-      }
-      leafRefreshLeft = delay;
-      return false;
-    }
-
-    /**
-     * 壊した位置のうち**葉が隣にあるもの**へ、近隣通知をもう一度投げる。
-     *
-     * <p>なぜ要るか（2026-08-04）: 葉を早く消すMOD（FastLeafDecay）は
-     * {@code BlockEvent.NeighborNotifyEvent} を受けるたびに「4〜11tick 後にその葉を1回だけ叩く」
-     * 予約を入れる（`FldScheduler`）。**予約は撃って消えなければ捨てられ、予約し直されない。**
-     * こちらは幹を数tickかけて下から消すので、**下のほうの丸太に隣した葉は、まだ上の幹が
-     * 立っているうちに予約を撃たれる**。葉は近くに丸太があるあいだ（`distance` が 7 未満）
-     * 消えない決まりなので、そのまま予約だけを失って取り残される。
-     * 上流の「1tick で全部」なら幹が同時に消えるので、この取りこぼしは起きない。
-     *
-     * <p>全部壊し終わってから投げ直せば、そのときは丸太が1本も残っていないので、
-     * 次の予約は必ず消える側に働く。
-     *
-     * <p>{@code ServerLevel.updateNeighborsAt} が {@code NeighborNotifyEvent} を出すことは
-     * 1.20.1 Forge 47.3.0 の bytecode で確認済み（イベントを投げてから本来の近隣更新を行う）。
-     */
-    private void refreshLeafNeighbours(ServerLevel level) {
-      int touched = 0;
-
-      for (BlockPos pos : broken) {
-
-        if (!level.isEmptyBlock(pos)) {
-          continue;   // 誰かが埋め戻した
-        }
-
-        for (Direction dir : Direction.values()) {
-
-          if (level.getBlockState(pos.relative(dir)).is(BlockTags.LEAVES)) {
-            level.updateNeighborsAt(pos, Blocks.AIR);
-            touched++;
-            break;
-          }
-        }
-      }
-
-      if (touched > 0) {
-        LOG.info("[paced] 葉へ通知を投げ直した（{} 箇所 / 壊した {} 個）", touched, broken.size());
-      }
-    }
   }
 }
