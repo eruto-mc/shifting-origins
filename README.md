@@ -53,7 +53,7 @@ datapack 自体は有効（`/datapack list enabled` に出る）なのに、職�
 
 そこで `ClassPowers` が **1秒に1回だけ職業を見て、能力を足す／外す**。
 
-| 素性・職業 | 足す | 外す |
+| 種族・職業 | 足す | 外す |
 | - | - | - |
 | `origins-classes:miner` | `shiftingorigins:vein_mine`（鉱脈掘り） | — |
 | `origins-classes:explorer` | `shiftingorigins:keen_eye`（見通す目）／`shiftingorigins:tireless`（疲れ知らず） | `origins-classes:explorer_kit`（開始装備） |

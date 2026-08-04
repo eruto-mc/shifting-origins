@@ -38,7 +38,7 @@ public final class ClassPowers {
       new ResourceLocation(ShiftingOrigins.MOD_ID, "class_powers");
 
   /**
-   * (素性・職業, 足す能力)
+   * (種族・職業, 足す能力)
    *
    * <p>⚠ **「外す」は 2026-08-04 に廃止した。** `removePower` は毎秒呼べていて source も
    * 正しかったのに `power has` が真のままだった＝**上流が付け直していて勝てない**
@@ -96,7 +96,7 @@ public final class ClassPowers {
     }
   }
 
-  /** そのプレイヤーが指定の素性／職業を選んでいるか（層は問わない）。 */
+  /** そのプレイヤーが指定の種族／職業を選んでいるか（層は問わない）。 */
   private static boolean hasOrigin(ServerPlayer player, String originId) {
     return io.github.edwinmindcraft.origins.api.capabilities.IOriginContainer.get(player)
         .map(c -> c.getOrigins().values().stream()
