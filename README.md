@@ -73,6 +73,26 @@ datapack 自体は有効（`/datapack list enabled` に出る）なのに、職�
 - 配ったことは**ログに出る**（`Dev に shiftingorigins:vein_mine を配った（origins-classes:miner）`）
 - 自分が配ったぶんには印（source）を付けてあるので、職業を変えると自分のぶんだけ外れる
 
+### 上流の power を上書きする（2026-08-04〜）
+
+`data/origins/powers/` と `data/origins-classes/powers/` に、**上流と同じ ID**の JSON を置き、
+**`loading_priority: 100`** を書く。Origins の公式ドキュメントが案内している正規のやり方
+（「Higher numbers mean it's loaded later, which means it will override those with lower
+loading priorities which share the same ID」。既定MODの値は 0）。
+
+| power | 上書きの形 |
+| - | - |
+| `origins:light_armor` | **値だけ**（型は `origins:restrict_armor` のまま、閾値を 999 にして実質無効化） |
+| `origins:claustrophobia` | 型ごと `apoli:simple` へ |
+| `origins-classes:explorer_kit` | 型ごと `apoli:simple` へ |
+| `origins-classes:better_enchanting` | 型ごと `apoli:simple` へ |
+
+⚠ **値だけ変えたいときは、型を替えずに数値を書き換えるほうがよい**（ユーザー方針 2026-08-04）。
+`apoli:simple` に替えると**元が何の power だったか読めなくなる**。
+
+⚠ **上書きは power を消さない。** `power has` は真のままなので、
+効いたかどうかは**振る舞い**で判定する（台本 shifting-origins を参照）。
+
 ### ⚠ 「外す」は効いていない（2026-08-04 実測）
 
 台本 [shifting-origins](../../dev/verify/scenarios/shifting-origins.json) の逆向き判定3本

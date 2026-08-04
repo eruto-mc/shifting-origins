@@ -1,7 +1,11 @@
 {
-  "type": "apoli:simple",
+  "type": "origins:restrict_armor",
   "loading_priority": 100,
   "hidden": true,
   "name": "（当部で無効化）",
-  "description": "防具の制限は当部では無い。"
+  "description": "防具の制限は当部では無い。",
+  "head":  { "type": "origins:armor_value", "comparison": ">", "compare_to": 999 },
+  "chest": { "type": "origins:armor_value", "comparison": ">", "compare_to": 999 },
+  "legs":  { "type": "origins:armor_value", "comparison": ">", "compare_to": 999 },
+  "feet":  { "type": "origins:armor_value", "comparison": ">", "compare_to": 999 }
 }
