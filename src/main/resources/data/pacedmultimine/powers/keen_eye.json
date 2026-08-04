@@ -1,0 +1,8 @@
+{
+  "type": "apoli:entity_glow",
+  "name": "見通す目",
+  "description": "しゃがんでいる間、周りの生き物や落とし物が光って見える。",
+  "condition": {
+    "type": "apoli:sneaking"
+  }
+}

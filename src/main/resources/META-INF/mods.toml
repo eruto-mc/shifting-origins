@@ -22,7 +22,10 @@ back so nothing is broken immediately, and breaks the blocks itself over the fol
 through the player's own mining path, so drops, experience, tool damage and other mods' events
 all behave exactly as they would when mining by hand.
 
-Server side only. Nothing is added to the world.
+⚠ Must be installed on both sides. The mod registers an Apoli power factory
+(pacedmultimine:vein_mine) and Forge synchronises that registry during login, so a client
+without this mod is rejected with "Failed to load registry". The client side itself does
+nothing; the breaking always happens on the server.
 '''
 
 [[dependencies.pacedmultimine]]
@@ -30,18 +33,18 @@ Server side only. Nothing is added to the world.
     mandatory=true
     versionRange="[47,)"
     ordering="NONE"
-    side="SERVER"
+    side="BOTH"
 
 [[dependencies.pacedmultimine]]
     modId="minecraft"
     mandatory=true
     versionRange="[1.20.1,1.20.2)"
     ordering="NONE"
-    side="SERVER"
+    side="BOTH"
 
 [[dependencies.pacedmultimine]]
     modId="origins_classes"
     mandatory=true
     versionRange="[1.0,)"
     ordering="AFTER"
-    side="SERVER"
+    side="BOTH"

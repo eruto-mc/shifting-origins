@@ -1,0 +1,13 @@
+{
+  "type": "pacedmultimine:vein_mine",
+  "name": "鉱脈掘り",
+  "description": "ツルハシで鉱石を掘ると、繋がった同じ鉱石をまとめて掘り出す。",
+  "item_condition": {
+    "type": "origins_classes:tool_action",
+    "tool_action": "pickaxe_dig"
+  },
+  "block_condition": {
+    "type": "apoli:in_tag",
+    "tag": "forge:ores"
+  }
+}

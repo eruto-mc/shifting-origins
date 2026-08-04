@@ -19,6 +19,8 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * 一括破壊を「少しずつ」に変えるキュー。プレイヤー1人につき1つ。
@@ -29,6 +31,7 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
  */
 public final class PacedBreakQueue {
 
+  private static final Logger LOG = LoggerFactory.getLogger("pacedmultimine");
   private static final Map<UUID, Job> JOBS = new HashMap<>();
   /** 自分が壊している最中かどうか。⚠ これが無いと、破壊するたびに power が再び発火して無限に増える。 */
   private static final Set<UUID> BUSY = new HashSet<>();
@@ -37,7 +40,7 @@ public final class PacedBreakQueue {
   }
 
   /** @return 横取りしてキューに積んだら true（呼び出し元は空の一覧を返す） */
-  public static boolean enqueue(Player player, List<BlockPos> positions) {
+  public static boolean enqueue(Player player, BlockPos origin, List<BlockPos> positions) {
 
     if (!(player instanceof ServerPlayer serverPlayer) || positions.isEmpty()) {
       return false;
@@ -51,7 +54,10 @@ public final class PacedBreakQueue {
     if (PacedMultiMine.Config.INTERVAL_TICKS.get() <= 0) {
       return false;   // 0 なら横取りしない＝上流どおり同じ tick で全部壊れる
     }
-    JOBS.put(serverPlayer.getUUID(), new Job(serverPlayer, positions));
+    Job job = new Job(serverPlayer, origin, positions);
+    LOG.info("[paced] 横取り {} 個（{}）1回 {} 個 / {} tick ごと", positions.size(),
+        serverPlayer.getGameProfile().getName(), job.batch, job.interval);
+    JOBS.put(serverPlayer.getUUID(), job);
     return true;
   }
 
@@ -91,11 +97,15 @@ public final class PacedBreakQueue {
     private final double maxDistanceSq;
     private int cooldown;
 
-    private Job(ServerPlayer player, List<BlockPos> positions) {
+    private Job(ServerPlayer player, BlockPos origin, List<BlockPos> positions) {
       this.playerId = player.getUUID();
       this.dimension = player.level().dimension();
       this.tool = player.getMainHandItem().getItem();
-      this.remaining = new ArrayDeque<>(new ArrayList<>(positions));
+      // ⚠ 上流が返すのは**順序を持たない集合**なので、そのまま壊すとバラバラの順になる。
+      //    掘ったところから外へ広がる順に並べ替える（木なら下から上へ崩れる）。
+      List<BlockPos> sorted = new ArrayList<>(positions);
+      sorted.sort(java.util.Comparator.comparingDouble(p -> p.distSqr(origin)));
+      this.remaining = new ArrayDeque<>(sorted);
       this.interval = PacedMultiMine.Config.INTERVAL_TICKS.get();
       this.batch = batchSize(positions.size(), this.interval);
       int range = PacedMultiMine.Config.MAX_DISTANCE.get();
@@ -132,6 +142,7 @@ public final class PacedBreakQueue {
         return true;
       }
       BUSY.add(playerId);
+      int broke = 0;
 
       try {
 
@@ -150,8 +161,10 @@ public final class PacedBreakQueue {
 
           if (!player.gameMode.destroyBlock(pos)) {
             // 保護MODなどに止められた。そこだけ飛ばす
+            LOG.info("[paced] 壊せなかった {}（保護MODか採掘条件を疑う）", pos);
             continue;
           }
+          broke++;
         }
       } finally {
         BUSY.remove(playerId);

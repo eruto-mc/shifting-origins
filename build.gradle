@@ -40,6 +40,10 @@ dependencies {
     // ⚠ クラス名を文字列で指定しても、**注釈処理の段階で実物が要る**
     //    （2026-08-04: 無しで組んだら "Mixin target ... could not be found" で落ちた）
     compileOnly files('libs/origins-classes.jar')
+    // 診断で ConfiguredPower / 条件の再評価に使う（origins-forge の jarJar から取り出したもの）
+    compileOnly files('libs/apoli.jar')
+    // 職業（Origins の層）を読むのに使う
+    compileOnly files('libs/origins.jar')
 }
 
 jar {

@@ -35,7 +35,7 @@ public abstract class MultiMinePowerMixin {
       return;
     }
 
-    if (PacedBreakQueue.enqueue(player, positions)) {
+    if (PacedBreakQueue.enqueue(player, pos, positions)) {
       cir.setReturnValue(List.of());
     }
   }
