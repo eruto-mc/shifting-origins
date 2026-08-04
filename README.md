@@ -53,20 +53,52 @@ datapack 自体は有効（`/datapack list enabled` に出る）なのに、職�
 
 そこで `ClassPowers` が **1秒に1回だけ職業を見て、能力を足す／外す**。
 
-| 職業 | 足す | 外す |
+| 素性・職業 | 足す | 外す |
 | - | - | - |
 | `origins-classes:miner` | `pacedmultimine:vein_mine`（鉱脈掘り） | — |
 | `origins-classes:explorer` | `pacedmultimine:keen_eye`（見通す目） | `origins-classes:explorer_kit`（開始装備） |
+| `origins:elytrian` | `pacedmultimine:light_armor_iron`（軽装・鉄まで） | `origins:light_armor`（革／チェインまで）／`origins:claustrophobia`（閉所で衰弱＋鈍足） |
+
+> **エリトリアンの罰則緩和（2026-08-04 ユーザー判断）**: 当部は elytraslot を入れており、
+> **誰でも胸当てと両立してエリトラを装備できる**。その状態でエリトリアンだけが防具制限と
+> 閉所の衰弱を背負うと「エリトリアンを選ぶと純粋に損」という逆転が起きるため、2つ緩めた。
+> 建築が主活動の当部で「拠点にいるだけで弱る」のは特に噛み合わない。
+> ⚠ `origins:more_kinetic_damage`（落下・壁激突 +50%）は**残す**——空を飛ぶ種族の味であり、
+> elytraslot 組が負わない危険なので、ここが差になる。
+> 詳しい経緯は [selection/origins-vs-convenience-mods-2026-08-04.md](../../selection/origins-vs-convenience-mods-2026-08-04.md)。
 
 - 能力の定義は**この jar の中**（`data/pacedmultimine/powers/`）。datapack に依存しない
 - **上流の定義は書き換えない**（足す／外すだけ）ので、上流が職業の中身を変えても黙って壊れない
 - 配ったことは**ログに出る**（`Dev に pacedmultimine:vein_mine を配った（origins-classes:miner）`）
 - 自分が配ったぶんには印（source）を付けてあるので、職業を変えると自分のぶんだけ外れる
 
-## 壊す順番
+## 壊す順番 — 掘った所から繋がりを辿る（幅優先）
 
 上流が返すのは**順序を持たない集合**なので、そのまま壊すとバラバラの順になる。
-**掘った位置からの距離順**に並べ替えてから壊す（木なら下から上へ崩れる）。
+**掘った位置から隣り合いを辿った順**（幅優先）に並べ替えてから壊す。
+こうすると**壊す位置は必ず、直前までに壊した所と隣り合っている**＝壊れ方が繋がって進む。
+
+⚠ **2026-08-04 に「掘った位置からの直線距離順」から変えた。** まっすぐな幹では結果が同じだが、
+**曲がった鉱脈では破壊の先頭が飛ぶ**: C の字に曲がった鉱脈だと、掘った所から直線では近いが
+繋がりでは遠い端が、**宙に浮いたまま先に消える**（試験場の形で数えると 36 個中 8 番目。
+繋がり順なら 32 番目）。検証台本 `paced-multimine` の `pmm-ore-connected` がこれを見ている。
+
+## 葉を早く消すMOD（FastLeafDecay）との共存
+
+**噛み合わせに手当てが要った**（2026-08-04）。FastLeafDecay（Olafski・当部は 31）は
+
+1. `BlockEvent.NeighborNotifyEvent` を受けるたびに「4〜11tick 後にその葉を1回だけ叩く」予約を入れる
+2. 叩かれた葉は、**近くに丸太があるあいだ（`distance` が 7 未満）消えない**
+3. **予約は撃って消えなければ捨てられ、予約し直されない**（`FldScheduler`）
+
+上流の「1tick で全部」なら幹が同時に消えるので取りこぼさない。ところがこちらは幹を数tickかけて
+下から消すので、**下のほうの丸太に隣した葉は、まだ上の幹が立っているうちに予約を撃たれて**
+消えないまま予約を失う。＝**浮いた葉が取り残される。**
+
+そこで**全部壊し終わってから、壊した位置のうち葉が隣にあるものへ近隣通知を投げ直す**
+（`PacedBreakQueue.refreshLeafNeighbours`）。そのときは丸太が1本も残っていないので、
+次の予約は必ず消える側に働く。`ServerLevel.updateNeighborsAt` が `NeighborNotifyEvent` を出すことは
+1.20.1 Forge 47.3.0 の bytecode で確認済み。
 
 ## 設定（`config/pacedmultimine-server.toml`）
 
@@ -77,6 +109,7 @@ datapack 自体は有効（`/datapack list enabled` に出る）なのに、職�
 | `maxTotalTicks` | 100 | 全体がこれを超えそうなら**1回あたりの個数を自動で増やす**（小さい鉱脈はゆっくり、巨木は待たされない） |
 | `maxDistanceFromPlayer` | 48 | 掘っている間に離れたら、その先へ進まない |
 | `oreVeinMaxBlocks` | 160 | **このMODが足した鉱脈掘りの上限**。木こり（上流）は255固定で、こちらの影響を受けない |
+| `leafRefreshDelayTicks` | 3 | 全部壊し終わってから、葉を早く消すMODへ**通知を投げ直す**までの猶予。`-1` で投げ直さない（上の「葉を早く消すMODとの共存」を参照） |
 
 ## ビルドと配置
 
@@ -102,5 +135,13 @@ cp build/libs/paced_multimine-1.0.0.jar ../../dev/server/mods/
 ## 確かめ方
 
 `py verify/run_probe_client.py --scenario paced-multimine --server`
-（丸太24段と鉄鉱石8段を掘り、**掘った直後はまだ上が残っている**ことと
-**待てば最後まで消える**ことを対で見る）。
+
+台本が見ているもの（2026-08-04 に拡張）:
+
+| 判定 | 何を見るか |
+| - | - |
+| `pmm-log-early` / `pmm-log-mid` | 45段の幹を掘り、**時刻を変えて2回**「どこまで消えたか」を見る。**境目が上へ動いている**＝順々に壊れている |
+| `pmm-log-done` | 最後には最上段まで倒れる（陽性対照。これが無いと「残っている」を「ゆっくり」と読めない） |
+| `pmm-leaves-gone` | 伐採から十分待つと**葉が1枚も残っていない**＝FastLeafDecay と噛み合っている |
+| `pmm-ore-connected` | **C の字に曲げた鉱脈**を掘り、直線では近いが繋がりでは遠い端が**まだ残っている**＝壊れ方が飛んでいない |
+| `pmm-ore-done` | 鉱脈も最後まで掘り切れる（陽性対照） |
