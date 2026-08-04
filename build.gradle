@@ -1,0 +1,55 @@
+buildscript {
+    repositories {
+        maven { url = 'https://maven.minecraftforge.net/' }
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'org.spongepowered:mixingradle:0.7.38'
+    }
+}
+
+plugins {
+    id 'net.minecraftforge.gradle' version '[6.0.24,6.2)'
+}
+
+apply plugin: 'org.spongepowered.mixin'
+
+version = '1.0.0'
+group = 'net.erutobusiness'
+base { archivesName = 'paced_multimine' }
+
+java.toolchain.languageVersion = JavaLanguageVersion.of(17)
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}
+
+minecraft {
+    mappings channel: 'official', version: '1.20.1'
+}
+
+mixin {
+    add sourceSets.main, 'pacedmultimine.refmap.json'
+    config 'pacedmultimine.mixins.json'
+}
+
+dependencies {
+    minecraft 'net.minecraftforge:forge:1.20.1-47.3.0'
+    annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
+    // Mixin のターゲット解決用（実行時は同梱しない。利用者が入れている本体に当てる）。
+    // ⚠ クラス名を文字列で指定しても、**注釈処理の段階で実物が要る**
+    //    （2026-08-04: 無しで組んだら "Mixin target ... could not be found" で落ちた）
+    compileOnly files('libs/origins-classes.jar')
+}
+
+jar {
+    manifest {
+        attributes([
+            'Specification-Title'   : 'paced_multimine',
+            'Specification-Version' : '1',
+            'Implementation-Title'  : 'Paced Multi Mine',
+            'Implementation-Version': project.version,
+            'MixinConfigs'          : 'pacedmultimine.mixins.json'
+        ])
+    }
+}

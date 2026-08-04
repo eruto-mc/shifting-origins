@@ -1,0 +1,13 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "net.erutobusiness.pacedmultimine.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "refmap": "pacedmultimine.refmap.json",
+  "mixins": [
+    "MultiMinePowerMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

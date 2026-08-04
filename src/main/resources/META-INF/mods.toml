@@ -1,0 +1,47 @@
+modLoader="javafml"
+loaderVersion="[47,)"
+license="MIT"
+issueTrackerURL="https://github.com/erutobusiness"
+
+[[mixins]]
+config="pacedmultimine.mixins.json"
+
+[[mods]]
+modId="pacedmultimine"
+version="1.0.0"
+displayName="Paced Multi Mine"
+authors="erutobusiness"
+description='''
+Makes the Origins Classes multi-mine powers (lumberjack tree felling, and any ore variant added
+by a datapack) break their blocks a few at a time instead of all in the same tick.
+
+Origins Classes breaks the whole vein in one tick. That is fine for a small tree, but a giant
+jungle tree or a large ore vein disappears instantly, which both looks flat and puts the whole
+cost on a single tick. This mod intercepts the block list the power produces, hands an empty list
+back so nothing is broken immediately, and breaks the blocks itself over the following ticks
+through the player's own mining path, so drops, experience, tool damage and other mods' events
+all behave exactly as they would when mining by hand.
+
+Server side only. Nothing is added to the world.
+'''
+
+[[dependencies.pacedmultimine]]
+    modId="forge"
+    mandatory=true
+    versionRange="[47,)"
+    ordering="NONE"
+    side="SERVER"
+
+[[dependencies.pacedmultimine]]
+    modId="minecraft"
+    mandatory=true
+    versionRange="[1.20.1,1.20.2)"
+    ordering="NONE"
+    side="SERVER"
+
+[[dependencies.pacedmultimine]]
+    modId="origins_classes"
+    mandatory=true
+    versionRange="[1.0,)"
+    ordering="AFTER"
+    side="SERVER"
