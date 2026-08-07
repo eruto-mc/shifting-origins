@@ -45,9 +45,11 @@ public final class ShiftingOrigins {
     FMLJavaModLoadingContext.get().getModEventBus().addListener(ShiftingOrigins::onConfigLoad);
     net.minecraftforge.fml.ModLoadingContext.get()
         .registerConfig(ModConfig.Type.SERVER, Config.SPEC);
+    Net.register();
     net.minecraftforge.common.MinecraftForge.EVENT_BUS.register(PacedBreakQueue.class);
     net.minecraftforge.common.MinecraftForge.EVENT_BUS.register(ClassPowers.class);
     net.minecraftforge.common.MinecraftForge.EVENT_BUS.register(PotionSharing.class);
+    net.minecraftforge.common.MinecraftForge.EVENT_BUS.register(OriginChangeCancel.class);
   }
 
   private static void onConfigLoad(final ModConfigEvent event) {

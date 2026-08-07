@@ -1,8 +1,15 @@
-# Shifting Origins — 職業の一括破壊を「少しずつ」にする＋職業の能力を配る
+# Shifting Origins — 種族・職業を「あとから変えられる」前提に作り直す
 
-Origins Classes の一括破壊（木こりの伐採／このMODが足す鉱夫の鉱脈掘り）を、
-**同じ tick に全部ではなく、数tickかけて少しずつ**壊すようにする当部の自作MOD。
-併せて**職業ごとの能力を配る**（下記）。⚠ **クライアントとサーバの両方に置く。**
+Origins（種族）と Origins: Classes（職業）を、**一度きりの選択ではなく、
+いつでも選び直せるもの**として成立させる当部の自作MOD。
+⚠ **クライアントとサーバの両方に置く。**
+
+| 受け持ち | 中身 |
+| - | - |
+| 能力を配り直す | 職業・種族ごとに、当部の能力を足す／上流の能力を無害な定義で上書きする |
+| 一括破壊を「少しずつ」にする | 木こりの伐採・鉱夫の鉱脈掘りを、同じ tick に全部ではなく数tickかけて壊す |
+| **選び直しをやめられるようにする** | 珠で開いた選択画面を Esc と × で閉じられる。種族は元に戻り、珠も返る（2026-08-07 追加） |
+| **珠の説明欄を読める文にする** | 「種族を『』にする。」と出ていたのを直す（2026-08-07 追加） |
 
 ## なぜ作ったか（2026-08-04）
 
@@ -150,7 +157,68 @@ loading priorities which share the same ID」。既定MODの値は 0）。
 ⚠ **これは FastLeafDecay の中で完結する話だった。** こちらが読む必要も、手を出す必要も無かった。
 判断の材料は「台本に葉の判定を1件足して1回回す」だけで足りた。
 
-## 設定（`config/pacedmultimine-server.toml`）
+## 珠で開いた選択画面をやめられるようにする（2026-08-07）
+
+**要望**: 珠を使って選択画面を開き、「やっぱり変えない」で閉じたい。
+解禁済みの種族の**能力を詳しく見る**のに選択画面が便利なので、見ただけで珠が消えるのは痛い。
+
+上流は `ChooseOriginScreen.shouldCloseOnEsc()` が **`false` 固定**で、閉じる手段がまったく無い。
+**理由はある**——層を空にしたまま閉じると `hasAllOrigins()` が偽のまま残り、
+`SelectionInvulnerabilityMixin` が全ダメージを無効にする＝**無敵で詰む**。
+だから「Esc を通す」だけでは悪化する。
+
+### どう作ったか
+
+```text
+珠を使う ─ Mixin(HEAD)  ─→ OriginChangeCancel.remember()   いまの種族一覧と珠を控える
+           上流の処理    ─→ 層を空にして選択画面を開かせる
+         ─ Mixin(RETURN) → OriginChangeCancel.announce()   クライアントへ「やめられる」と伝える
+
+Esc ─→ shouldCloseOnEsc()==true ┐
+×  ─→ ボタン ──────────────────┴→ onClose() → CancelRequest → cancel()
+                                                  ├ 控えた種族へ戻す
+                                                  └ 珠を返す（クリエイティブでは返さない）
+```
+
+| 部品 | 置き場 |
+| - | - |
+| 控えと復元・珠の返却 | [`OriginChangeCancel`](src/main/java/net/erutobusiness/shiftingorigins/OriginChangeCancel.java) |
+| 通信路（便り2本） | [`Net`](src/main/java/net/erutobusiness/shiftingorigins/Net.java) |
+| クライアント側の印 | [`CancelClient`](src/main/java/net/erutobusiness/shiftingorigins/CancelClient.java) |
+| 控えを取る・説明欄を直す | [`OrbOfOriginItemMixin`](src/main/java/net/erutobusiness/shiftingorigins/mixin/OrbOfOriginItemMixin.java) |
+| Esc・× ボタン | [`ChooseOriginScreenMixin`](src/main/java/net/erutobusiness/shiftingorigins/mixin/client/ChooseOriginScreenMixin.java) |
+
+### 詰まないようにしてある3点
+
+| 守り | 中身 |
+| - | - |
+| **やめてよい場面だけ開ける** | 判断はサーバーが持つ。印が立つのは**珠を使った直後だけ**なので、`/origin gui` で開いた画面は今までどおり閉じられない（閉じられると層が空のまま残って無敵になる） |
+| **戻す前に「もう選び終えていないか」を見る** | 選び終えた層は `origins:empty` ではないので触らないし、珠も返さない。便りが二重に届いても種族は巻き戻らない |
+| **退場したら両側で控えを捨てる** | 残すと入り直したあとに古い種族へ戻せてしまう。捨てたあとは「やめられない＝選ぶしかない」に倒れるので、珠を消したまま何も選べない状態にはならない |
+
+⚠ **サーバーを落とすと控えは消える**（記憶の上だけに持っている）。
+珠を使ったまま落ちた場合、入り直すと選択画面はまた開くが、やめられない。
+
+### ⚠ ここは当部のハーネスで機械判定できない唯一の領域
+
+台本は毎tick `setScreen(null)` で画面を閉じるので、**選択画面そのものは撮れないし触れない**。
+Esc・× ボタン・説明欄の見え方は**実プレイで確認するしかない**
+（`worlds/world-3/verification/manual-worklist.md` に項目を置いてある）。
+
+## 珠の説明欄が「」になっていたのを直す（2026-08-07）
+
+上流の `OrbOfOriginItem.appendHoverText` は、珠が指す種族が `Origin.EMPTY` と
+**同一オブジェクトなら**「新しい〜を選び直せる」、違えば「〜を『(名前)』にする」と出す。
+
+当部の珠は NBT に `Origin:"origins:empty"` を持つ。これはレジストリから引いた**別のオブジェクト**なので
+後者に落ち、その名前は `Component.literal("")`（`Origin` クラスの静的初期化で空文字を渡している）。
+結果、**「種族を『』にする。」**と表示されていた。
+
+⚠ **NBT から `Origin` を外せば直る、ではない。** `getTargets` は `Origin` を持たない項目を**捨てる**ので、
+対象0件＝「**全部の層を選び直す**」に化ける（種族用の珠を使ったのに職業まで選び直しになる）。
+正しい直し方は「**名前が空のときに『選び直せる』側の文言を出す**」。
+
+## 設定（`config/shiftingorigins-server.toml`）
 
 | キー | 既定 | 内容 |
 | - | - | - |
@@ -165,7 +233,7 @@ loading priorities which share the same ID」。既定MODの値は 0）。
 ```bash
 export JAVA_HOME=/path/to/jdk-17      # JDK 17 ならどれでもよい
 ./gradlew build --no-daemon
-# → build/libs/shiftingorigins-1.0.0.jar をクライアントとサーバの mods/ へ置く
+# → build/libs/shifting_origins-<版>.jar をクライアントとサーバの mods/ へ置く
 ```
 
 - **`libs/` に3つ要る**（`.gitignore` 済み・`dev/instance/mods/` からコピーする）:
