@@ -199,11 +199,36 @@ Esc ─→ shouldCloseOnEsc()==true ┐
 ⚠ **サーバーを落とすと控えは消える**（記憶の上だけに持っている）。
 珠を使ったまま落ちた場合、入り直すと選択画面はまた開くが、やめられない。
 
-### ⚠ ここは当部のハーネスで機械判定できない唯一の領域
+### 確かめ方（機械で判定している）
 
-台本は毎tick `setScreen(null)` で画面を閉じるので、**選択画面そのものは撮れないし触れない**。
-Esc・× ボタン・説明欄の見え方は**実プレイで確認するしかない**
-（`worlds/world-3/verification/manual-worklist.md` に項目を置いてある）。
+> ⚠ **訂正（2026-08-07）**: ここには当初「当部のハーネスで機械判定できない唯一の領域。
+> 実プレイで確認するしかない」と書いていた。**誤り。**
+> ハーネスには最初から **`"keep_screen": true`**（その手順では画面を閉じない）があり、
+> 画面を**読む**手（`/probeclient screen` / `widget`）も揃っていた。
+> 足りなかったのは**触る**手だけで、それは3本足せば済んだ。
+> 「画面は機械で触れない」と決めつけて、**在る道具を確かめずに人へ送っていた。**
+
+台本 `shifting-origins`（`py verify/run_probe_client.py --scenario shifting-origins`）が見ている:
+
+| 判定 | 何を見るか |
+| - | - |
+| `cancel-tooltip` | 珠の説明欄に「選び直せる」が出ている |
+| `cancel-tooltip-broken` | **陰性対照**。壊れていた頃の文字（空のカギ括弧）が出て**いない** |
+| `cancel-screen-open-esc` | **陽性対照**。そもそも選択画面が開いている（これが無いと以下が成立しない） |
+| `cancel-esc` | Esc で閉じる |
+| `cancel-esc-restored` | 閉じたあと**種族が元に戻り・珠が返ってくる** |
+| `cancel-x-button` | × ボタンが見えて押せる状態で在り、**押せる** |
+| `cancel-x-restored` | × でも同じ結果になる |
+| `cancel-negative-esc` | **陰性対照**。`/origin gui` で開いた画面は Esc で**閉じない** |
+| `cancel-negative-restore` | 陰性対照で空にした層を戻す（後始末＋以降の判定の関門） |
+
+ハーネス側に足した3本（`work/verifyprobe/`）:
+
+| コマンド | 何をするか |
+| - | - |
+| `/probeclient screenkey "escape" <ラベル> [閉じる期待]` | 開いている画面に**キーを渡す**（`Screen#keyPressed`＝実機と同じ入口）。⚠ `/probeclient key` は `KeyMapping.click()` なので画面には届かない |
+| `/probeclient click "<文言>" <ラベル>` | 画面ごしにボタンを**押す**（`Screen#mouseClicked` をボタン中心へ） |
+| `/probeclient tooltipmatch <枠> "<文言>" <ラベル>` | 説明欄にその文言が在るかを OK/NG で返す。⚠ 枠に **-1** で手に持っているもの |
 
 ## 珠の説明欄が「」になっていたのを直す（2026-08-07）
 
