@@ -163,10 +163,9 @@ loading priorities which share the same ID」。既定MODの値は 0）。
 ## ビルドと配置
 
 ```bash
-export JAVA_HOME="c:/@projects/minecraft-club/worlds/world-3/dev/jdk17/jdk-17.0.19+10"
+export JAVA_HOME=/path/to/jdk-17      # JDK 17 ならどれでもよい
 ./gradlew build --no-daemon
-cp build/libs/paced_multimine-1.0.0.jar ../../dev/instance/mods/
-cp build/libs/paced_multimine-1.0.0.jar ../../dev/server/mods/
+# → build/libs/shiftingorigins-1.0.0.jar をクライアントとサーバの mods/ へ置く
 ```
 
 - **`libs/` に3つ要る**（`.gitignore` 済み・`dev/instance/mods/` からコピーする）:
