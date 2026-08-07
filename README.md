@@ -75,7 +75,7 @@ datapack 自体は有効（`/datapack list enabled` に出る）なのに、職�
 > elytraslot 組が負わない危険なので、ここが差になる。
 > 詳しい経緯は作者側の選定記録にある（公開していない）。
 
-- 能力の定義は**この jar の中**（`data/pacedmultimine/powers/`）。datapack に依存しない
+- 能力の定義は**この jar の中**（`data/shiftingorigins/powers/`）。datapack に依存しない
 - **上流の定義は書き換えない**（足す／外すだけ）ので、上流が職業の中身を変えても黙って壊れない
 - 配ったことは**ログに出る**（`Dev に shiftingorigins:vein_mine を配った（origins-classes:miner）`）
 - 自分が配ったぶんには印（source）を付けてあるので、職業を変えると自分のぶんだけ外れる
