@@ -64,7 +64,7 @@ datapack 自体は有効（`/datapack list enabled` に出る）なのに、職�
 | - | - | - |
 | `origins-classes:miner` | `shiftingorigins:vein_mine`（鉱脈掘り） | — |
 | `origins-classes:explorer` | `shiftingorigins:keen_eye`（見通す目）／`shiftingorigins:tireless`（疲れ知らず） | `origins-classes:explorer_kit`（開始装備） |
-| `origins-classes:cleric` | `shiftingorigins:potion_sharing`（分かち合う祈り） | `origins-classes:better_enchanting`（エンチャ台の本棚パワー +10） |
+| `origins-classes:cleric` | `shiftingorigins:potion_sharing`（分かち合う祈り） | — |
 | `origins:elytrian` | `shiftingorigins:light_armor_iron`（軽装・鉄まで） | `origins:light_armor`（革／チェインまで）／`origins:claustrophobia`（閉所で衰弱＋鈍足） |
 
 > **エリトリアンの罰則緩和（2026-08-04 ユーザー判断）**: 当部は elytraslot を入れており、
@@ -92,7 +92,6 @@ loading priorities which share the same ID」。既定MODの値は 0）。
 | `origins:light_armor` | **値だけ**（型は `origins:restrict_armor` のまま、閾値を 999 にして実質無効化） |
 | `origins:claustrophobia` | 型ごと `apoli:simple` へ |
 | `origins-classes:explorer_kit` | 型ごと `apoli:simple` へ |
-| `origins-classes:better_enchanting` | 型ごと `apoli:simple` へ |
 
 ⚠ **値だけ変えたいときは、型を替えずに数値を書き換えるほうがよい**（ユーザー方針 2026-08-04）。
 `apoli:simple` に替えると**元が何の power だったか読めなくなる**。
@@ -121,7 +120,10 @@ loading priorities which share the same ID」。既定MODの値は 0）。
 詳細は作者側の選定記録「3.5 実測で分かったこと」にある。
 
 ⚠ **実害があるのは `claustrophobia` だけ。** 開始装備は「配られない」ことが別途 OK で確認でき
-（`explorer-no-kit`）、`better_enchanting` は EnchantingInfuser に効かないので元から死んでいる。
+（`explorer-no-kit`）。
+
+> ⚠ **訂正（2026-08-07・対応済み）**: この根拠は消えたので、**上書きをやめて元に戻した**。**EnchantingInfuser は 2026-08-05 に除去済み**（決定の正は `build-checklist.py` の OVERRIDE）。いまのエンチャントは**バニラの台＋Easy Magic**（`EnchantmentTableBlockMixin` と accessor だけで計算は置き換えない）＋ Ensorcellation。Origins Classes は `common.minecraft.EnchantmentMenuMixin` で**バニラの `EnchantmentMenu` に当てており**、`check_mixin_targets.py` は「ずれ無し」＝当たっている。→ **`better_enchanting` はいま生きている見込みが高い**。当部が潰す理由が無くなったので、扱いは部長判断（`selection/origins-mod-interactions-2026-08-07.md`）。
+
 
 ## 壊す順番 — 掘った所から繋がりを辿る（幅優先）
 
