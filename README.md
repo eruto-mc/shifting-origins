@@ -1,4 +1,4 @@
-# Paced Multi Mine — 職業の一括破壊を「少しずつ」にする＋職業の能力を配る
+# Shifting Origins — 職業の一括破壊を「少しずつ」にする＋職業の能力を配る
 
 Origins Classes の一括破壊（木こりの伐採／このMODが足す鉱夫の鉱脈掘り）を、
 **同じ tick に全部ではなく、数tickかけて少しずつ**壊すようにする当部の自作MOD。
@@ -66,7 +66,7 @@ datapack 自体は有効（`/datapack list enabled` に出る）なのに、職�
 > 建築が主活動の当部で「拠点にいるだけで弱る」のは特に噛み合わない。
 > ⚠ `origins:more_kinetic_damage`（落下・壁激突 +50%）は**残す**——空を飛ぶ種族の味であり、
 > elytraslot 組が負わない危険なので、ここが差になる。
-> 詳しい経緯は [selection/origins-vs-convenience-mods-2026-08-04.md](../../selection/origins-vs-convenience-mods-2026-08-04.md)。
+> 詳しい経緯は作者側の選定記録にある（公開していない）。
 
 - 能力の定義は**この jar の中**（`data/pacedmultimine/powers/`）。datapack に依存しない
 - **上流の定義は書き換えない**（足す／外すだけ）ので、上流が職業の中身を変えても黙って壊れない
@@ -95,7 +95,7 @@ loading priorities which share the same ID」。既定MODの値は 0）。
 
 ### ⚠ 「外す」は効いていない（2026-08-04 実測）
 
-台本 [shifting-origins](../../dev/verify/scenarios/shifting-origins.json) の逆向き判定3本
+検証台本の逆向き判定3本
 （`explorer_kit` / `better_enchanting` / `claustrophobia`）が**2回とも NG**。サーバログ:
 
 ```
@@ -111,7 +111,7 @@ loading priorities which share the same ID」。既定MODの値は 0）。
 **直す方向（未着手）**: 外すのをやめ、**power の定義を無害な内容で datapack から上書きする**。
 同じ回で `so-loading-priority` が OK になり、**`loading_priority` を書けば datapack から
 上書きできる**ことが確定したので、Java を書かずに済む。
-詳細は [selection/origins-vs-convenience-mods-2026-08-04.md](../../selection/origins-vs-convenience-mods-2026-08-04.md) の「3.5 実測で分かったこと」。
+詳細は作者側の選定記録「3.5 実測で分かったこと」にある。
 
 ⚠ **実害があるのは `claustrophobia` だけ。** 開始装備は「配られない」ことが別途 OK で確認でき
 （`explorer-no-kit`）、`better_enchanting` は EnchantingInfuser に効かないので元から死んでいる。
