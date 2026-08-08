@@ -47,3 +47,10 @@ factories, and the registry is synced on login.
     versionRange="[1.0,)"
     ordering="AFTER"
     side="BOTH"
+
+[[dependencies.shiftingorigins]]
+    modId="harvest_with_ease"
+    mandatory=false
+    versionRange="[9,)"
+    ordering="AFTER"
+    side="BOTH"
