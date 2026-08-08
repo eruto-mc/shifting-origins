@@ -96,6 +96,16 @@ public final class ClassPowers {
     }
   }
 
+  /**
+   * そのプレイヤーが料理人か。
+   *
+   * <p>⚠ **判定を2か所に書かない。** 種族・職業の読み出しは下の {@code hasOrigin} が正で、
+   * ここはその呼び出し口にすぎない（2026-08-09 追加）。
+   */
+  public static boolean isCook(ServerPlayer player) {
+    return hasOrigin(player, "origins-classes:cook");
+  }
+
   /** そのプレイヤーが指定の種族／職業を選んでいるか（層は問わない）。 */
   private static boolean hasOrigin(ServerPlayer player, String originId) {
     return io.github.edwinmindcraft.origins.api.capabilities.IOriginContainer.get(player)
