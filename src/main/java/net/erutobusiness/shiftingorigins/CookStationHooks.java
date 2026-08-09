@@ -55,8 +55,16 @@ public final class CookStationHooks {
   /**
    * 地面へ出た食べ物に印を押す。
    *
-   * <p>⚠ <b>近くに居る料理人のうち、直前にその台を触った人だけ</b>を見る。
-   * 誰も触っていなければ何もしないので、落ちている食べ物を拾っただけでは印は付かない。
+   * <p>⚠ <b>台の位置で引く</b>（2026-08-10 に作り直した）。産物は台の位置に湧くので、
+   * 「その場所の台を誰が仕込んだか」を見れば、<b>仕込んだ人がその場に居なくても</b>印を押せる。
+   *
+   * <p>⚠⚠ <b>作り直した理由は焚き火。</b> 旧実装は「近くに居る料理人のうち、直前に
+   * その台を触った人」を 100 tick の窓で探していた。焚き火の調理は <b>600 tick</b> なので、
+   * <b>焼き上がるころには窓が6倍過ぎている</b>。さらに旧実装は
+   * <b>プレイヤーごとに1か所しか覚えない</b>ので、焚き火を並べて仕込むと最後の1つ以外は忘れた。
+   * ⚠ **UIの無い台が「料理でない」わけではない。焚き火はバニラの調理台。**
+   *
+   * <p>⚠ 落ちている食べ物を拾っただけでは印は付かない（誰も仕込んでいない場所には台の記憶が無い）。
    */
   @SubscribeEvent
   public static void onItemSpawn(final EntityJoinLevelEvent event) {
@@ -70,14 +78,9 @@ public final class CookStationHooks {
     if (stack.isEmpty() || !stack.isEdible()) {
       return;
     }
-    double x = item.getX();
-    double y = item.getY();
-    double z = item.getZ();
-    for (ServerPlayer sp : level.players()) {
-      if (CookMark.nearLastUse(sp, x, y, z)) {
-        CookMark.stamp(sp, stack);
-        return;
-      }
+    ServerPlayer cook = CookMark.cookWhoLoaded(level, item.getX(), item.getY(), item.getZ());
+    if (cook != null) {
+      CookMark.stamp(cook, stack);
     }
   }
 }

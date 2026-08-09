@@ -2,13 +2,16 @@ package net.erutobusiness.shiftingorigins;
 
 import dev.limonblaze.originsclasses.common.apoli.power.ModifyCraftedFoodPower;
 import dev.limonblaze.originsclasses.common.event.ModifyCraftResultEvent;
+import java.util.HashMap;
 import java.util.Map;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.util.UUID;
 import java.util.WeakHashMap;
 import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * 「料理人が作った食べ物」に印を押す。
@@ -48,38 +51,109 @@ import net.minecraft.world.item.ItemStack;
  */
 public final class CookMark {
 
-  /** 料理人が最後に触った台の位置と時刻。⚠ プレイヤーごとに1つだけ持つ */
+  /** 料理人が最後に触った台の位置と時刻。**手で受け取る側**（持ち物・手）の判定に使う */
   private static final Map<ServerPlayer, long[]> LAST_USE = new WeakHashMap<>();
+
+  /**
+   * <b>台ごとに「誰が仕込んだか」</b>。地面へ吐く台の判定に使う。
+   *
+   * <p>⚠⚠ <b>プレイヤーごとに1つ覚える形では焚き火が取れない</b>（2026-08-10 に作り直した）。
+   * 理由は2つあって、どちらも実測ではなく**数で決まる**:
+   *
+   * <ul>
+   *   <li><b>時間</b>: 焚き火の `campfire_cooking` は <b>600 tick</b>（バニラのレシピ JSON の
+   *       `cookingtime`）。仕込んでから焼き上がるまでに、旧 100 tick の窓は<b>6倍過ぎている</b></li>
+   *   <li><b>数</b>: 焚き火は1つに<b>4つ</b>まで入るし、複数台を並べて仕込むのが普通。
+   *       <b>プレイヤーごとに1か所しか覚えないと、最後に触った台以外は全部忘れる</b></li>
+   * </ul>
+   *
+   * <p>→ <b>台の位置で覚える。</b> 産物は台の位置に湧くので、湧いた場所のブロックを引けばよい。
+   */
+  private static final Map<BlockPos, LoadedBy> LOADED = new HashMap<>();
+
   /** 台から出たと見なす距離（ブロック）。⚠ 体感で決める調整値 */
   private static final double NEAR = 6.0D;
-  /** 台に触ってから何 tick まで「その台の産物」と見なすか。⚠ 同上 */
-  private static final long WINDOW = 100L;
+  /**
+   * <b>手で受け取る</b>とき、台に触ってから何 tick まで「その台の産物」と見なすか。
+   * ⚠ 体感で決める調整値。⚠ <b>長くしない</b>——長いと、台のそばで拾った食べ物にまで印が付く。
+   */
+  private static final long WINDOW_TAKE = 100L;
+  /**
+   * <b>地面へ吐く台</b>を仕込んでから、その台の産物と見なす上限。
+   *
+   * <p>⚠ <b>焚き火の 600 tick を必ず超えること。</b> 2400 tick ＝ 2分。
+   * ⚠ 体感で決める調整値だが、<b>下限は焚き火が決めている</b>。
+   * これより長い調理時間の台があれば、その台は取りこぼす。
+   */
+  private static final long WINDOW_COOK = 2400L;
 
   private static final Logger LOG = LoggerFactory.getLogger("shiftingorigins");
+
+  /** どの料理人が、いつ仕込んだか */
+  private record LoadedBy(UUID cook, long at) {
+  }
 
   private CookMark() {
   }
 
   /** 料理人が台を触ったことを控える（{@code PlayerInteractEvent.RightClickBlock} から呼ぶ） */
   public static void remember(ServerPlayer player, BlockPos pos) {
-    LAST_USE.put(player, new long[]{pos.getX(), pos.getY(), pos.getZ(),
-        player.serverLevel().getGameTime()});
-    LOG.info("[cook] 台を触った: {} @ {}", player.getGameProfile().getName(), pos);
+    long now = player.serverLevel().getGameTime();
+    LAST_USE.put(player, new long[]{pos.getX(), pos.getY(), pos.getZ(), now});
+    LOADED.put(pos.immutable(), new LoadedBy(player.getUUID(), now));
+    // ⚠ 触るたびに古い分を捨てる。⚠ **溜めっぱなしにしない**（台の数だけ増え続ける）
+    LOADED.entrySet().removeIf(e -> now - e.getValue().at() > WINDOW_COOK);
+    LOG.info("[cook] 台を触った: {} @ {}（控えている台 {} 個）",
+        player.getGameProfile().getName(), pos, LOADED.size());
   }
 
-  /** その座標が「直前に触った台のそば」か */
+  /**
+   * その座標が「直前に触った台のそば」か。
+   * ⚠ <b>手で受け取る側の判定</b>（持ち物へ入る・手の物と入れ替わる）にだけ使う。
+   */
   public static boolean nearLastUse(ServerPlayer player, double x, double y, double z) {
     long[] v = LAST_USE.get(player);
     if (v == null) {
       return false;
     }
-    if (player.serverLevel().getGameTime() - v[3] > WINDOW) {
+    if (player.serverLevel().getGameTime() - v[3] > WINDOW_TAKE) {
       return false;
     }
     double dx = x - v[0];
     double dy = y - v[1];
     double dz = z - v[2];
     return dx * dx + dy * dy + dz * dz <= NEAR * NEAR;
+  }
+
+  /**
+   * その場所へ吐かれた物を仕込んだ料理人を返す（居なければ {@code null}）。
+   *
+   * <p>⚠ <b>湧いた場所のブロックだけを見るのではなく、近く（{@code NEAR}）の台を探す。</b>
+   * 台によっては産物が少しずれた位置に湧く（焚き火は火の上、粉砕機は正面など）。
+   *
+   * <p>⚠ <b>仕込んだ人が居なくなっていたら諦める。</b> 印を押すには
+   * その人が持っている power を引く必要があるので、離線していると押せない。
+   */
+  public static ServerPlayer cookWhoLoaded(ServerLevel level, double x, double y, double z) {
+    long now = level.getGameTime();
+    for (Map.Entry<BlockPos, LoadedBy> e : LOADED.entrySet()) {
+      LoadedBy v = e.getValue();
+      if (now - v.at() > WINDOW_COOK) {
+        continue;
+      }
+      BlockPos p = e.getKey();
+      double dx = x - p.getX();
+      double dy = y - p.getY();
+      double dz = z - p.getZ();
+      if (dx * dx + dy * dy + dz * dz > NEAR * NEAR) {
+        continue;
+      }
+      ServerPlayer sp = level.getServer().getPlayerList().getPlayer(v.cook());
+      if (sp != null) {
+        return sp;
+      }
+    }
+    return null;
   }
 
   /**
