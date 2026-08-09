@@ -3,6 +3,8 @@ package net.erutobusiness.shiftingorigins;
 import dev.limonblaze.originsclasses.common.apoli.power.ModifyCraftedFoodPower;
 import dev.limonblaze.originsclasses.common.event.ModifyCraftResultEvent;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.util.WeakHashMap;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
@@ -53,6 +55,8 @@ public final class CookMark {
   /** 台に触ってから何 tick まで「その台の産物」と見なすか。⚠ 同上 */
   private static final long WINDOW = 100L;
 
+  private static final Logger LOG = LoggerFactory.getLogger("shiftingorigins");
+
   private CookMark() {
   }
 
@@ -60,6 +64,7 @@ public final class CookMark {
   public static void remember(ServerPlayer player, BlockPos pos) {
     LAST_USE.put(player, new long[]{pos.getX(), pos.getY(), pos.getZ(),
         player.serverLevel().getGameTime()});
+    LOG.info("[cook] 台を触った: {} @ {}", player.getGameProfile().getName(), pos);
   }
 
   /** その座標が「直前に触った台のそば」か */
@@ -90,5 +95,7 @@ public final class CookMark {
     }
     ModifyCraftedFoodPower.modify(player, stack,
         ModifyCraftResultEvent.CraftingResultType.CRAFTING);
+    LOG.info("[cook] 印を押した: {} -> {} / tag={}", player.getGameProfile().getName(),
+        stack, stack.getTag());
   }
 }

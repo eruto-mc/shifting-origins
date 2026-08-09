@@ -43,7 +43,11 @@ public abstract class InventoryMixin {
     if (!(this.player instanceof ServerPlayer sp) || stack.isEmpty() || !stack.isEdible()) {
       return;
     }
-    if (!CookMark.nearLastUse(sp, sp.getX(), sp.getY(), sp.getZ())) {
+    boolean near = CookMark.nearLastUse(sp, sp.getX(), sp.getY(), sp.getZ());
+    org.slf4j.LoggerFactory.getLogger("shiftingorigins")
+        .info("[cook] 持ち物へ入る: {} near={} item={}",
+            sp.getGameProfile().getName(), near, stack);
+    if (!near) {
       return;
     }
     CookMark.stamp(sp, stack);
