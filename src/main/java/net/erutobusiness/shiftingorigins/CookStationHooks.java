@@ -31,10 +31,21 @@ public final class CookStationHooks {
   }
 
   /**
-   * ⚠ <b>取り消されたかどうかを見ない。</b> 台を開けなかった場合も「触った」と控えるが、
-   * 控えるだけなら害は無い（近くから食べ物が出なければ何も起きない）。
+   * ⚠⚠ <b>{@code receiveCanceled = true} が要る。</b>
+   * Forge のイベントは<b>誰かが取り消すと、以後の購読者へ届かない</b>。
+   * 当部は Open Parties and Claims のような保護MODを入れているので、
+   * {@code RightClickBlock} は取り消されうる。
+   *
+   * <p>2026-08-09 に実際に踏んだ: 診断ログを入れたら
+   * 「台を触った」が<b>1行も出ない</b>のに「持ち物へ入る」は毎回出ていた
+   * ——つまり<b>購読が呼ばれていなかった</b>。
+   * ⚠ Web を1回引いて分かった（検索語:
+   * 「Minecraft Forge event handler not called canceled event receiveCanceled RightClickBlock」）。
+   *
+   * <p>⚠ <b>取り消された操作でも「触った」と控えてよい。</b> 控えるだけなら害は無い
+   * （近くから食べ物が出なければ何も起きない）。
    */
-  @SubscribeEvent(priority = EventPriority.LOWEST)
+  @SubscribeEvent(priority = EventPriority.LOWEST, receiveCanceled = true)
   public static void onRightClickBlock(final PlayerInteractEvent.RightClickBlock event) {
     if (event.getEntity() instanceof ServerPlayer sp) {
       CookMark.remember(sp, event.getPos());
