@@ -81,11 +81,25 @@ public final class CookMark {
   /**
    * <b>地面へ吐く台</b>を仕込んでから、その台の産物と見なす上限。
    *
-   * <p>⚠ <b>焚き火の 600 tick を必ず超えること。</b> 2400 tick ＝ 2分。
-   * ⚠ 体感で決める調整値だが、<b>下限は焚き火が決めている</b>。
-   * これより長い調理時間の台があれば、その台は取りこぼす。
+   * <p>⚠⚠ <b>これは体感で決める値ではない。データで決まる。</b>
+   * 入れてあるMODの<b>全レシピの調理時間の最大</b>を超えていないと、その台は取りこぼす。
+   *
+   * <p>2026-08-10 に全 jar のレシピ JSON を数えた結果:
+   *
+   * <pre>
+   *   7200 tick（6分） … yeastnfeast:keg の brew_time / yeastnfeast:cheese_press の pressTime
+   *   3600 tick（3分） … yeastnfeast:keg の一部
+   *    600 tick（30秒）… バニラの campfire_cooking
+   * </pre>
+   *
+   * <p>最大 7200 に余裕をみて <b>9600</b>（8分）。
+   * ⚠ <b>最初は 2400（2分）と書いた。焚き火の 600 しか見ておらず、
+   * チーズ搾りと樽の 7200 を取りこぼす値だった。</b>
+   *
+   * <p>⚠ <b>MODを足したら数え直す。</b>
+   * {@code py verify/check_cook_window.py} が数えて、この値を超えていたら止める。
    */
-  private static final long WINDOW_COOK = 2400L;
+  private static final long WINDOW_COOK = 9600L;
 
   private static final Logger LOG = LoggerFactory.getLogger("shiftingorigins");
 
