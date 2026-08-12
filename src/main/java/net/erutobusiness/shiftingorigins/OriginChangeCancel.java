@@ -34,9 +34,14 @@ import org.slf4j.LoggerFactory;
  *   Esc / ×   ────────────→ CancelRequest ─→ cancel(): 控えた種族へ戻し、珠を返す
  * </pre>
  *
- * <p>⚠ **控えは記憶の上だけ**（サーバーを落とすと消える）。落ちたあとに入り直すと
- * 選択画面はまた開くが、やめられない＝選ぶしかない。珠を消したまま何も選べない状態には
- * ならないので、これで安全側に倒れている。
+ * <p>⚠ **控えは記憶の上だけ**（サーバーを落とすと消える）。
+ * ⚠⚠ **2026-08-13 訂正**: ここには「落ちたあとに入り直すと選択画面はまた開くが、
+ * やめられない＝選ぶしかない」と書いていたが、**実際は画面も開かない**。
+ * 入室処理は {@code checkAutoChoosingLayers(<b>true</b>)} を呼ぶので、
+ * 空の層には**既定の種族が入る**（当部は両方の層に既定を書いてある）。
+ * つまり入り直した人は「人間に戻っていて、使った珠は返ってこない」。
+ * 珠1つ分の損だが、無敵で詰むことはない＝安全側に倒れているのは変わらない。
+ * 同じ理由で {@link OriginLayerGuard} は層が空のまま残った人を既定へ戻せる。
  *
  * <p>⚠ **戻す前に「もう選び終えていないか」を見る。** 選び終えていれば層は
  * {@code origins:empty} ではないので、そこには触らないし珠も返さない。
@@ -106,6 +111,27 @@ public final class OriginChangeCancel {
       LOG.info("[shiftingorigins] {} が種族の選び直しをやめた（{} 層を戻した）",
           player.getGameProfile().getName(), restored);
     });
+  }
+
+  /**
+   * 珠で開いた選択の**途中か**。
+   *
+   * <p>{@link OriginLayerGuard} が「層が空なのは事故か、選んでいる最中か」を見分けるのに使う。
+   * 控えが在る＝この人は自分の意思で層を空にした、という意味になる。
+   */
+  public static boolean isChoosing(ServerPlayer player) {
+    return PENDING.containsKey(player.getUUID());
+  }
+
+  /**
+   * 控えを捨てる。**選び終わったあと**に呼ぶ（{@link OriginLayerGuard} が層の埋まりを見て呼ぶ）。
+   *
+   * <p>⚠ **捨てないと接続の終わりまで残る。** {@link #cancel} は選び終えた層に触らないので
+   * 機能は変わらないが、控えが残っていると安全網が「まだ選択中」と読んで働かなくなる
+   * （珠で選び終えた人に管理コマンドで層を空にされたとき、詰みが塞がらない）。
+   */
+  public static void forget(ServerPlayer player) {
+    PENDING.remove(player.getUUID());
   }
 
   private static void giveBack(ServerPlayer player, ItemStack orb) {

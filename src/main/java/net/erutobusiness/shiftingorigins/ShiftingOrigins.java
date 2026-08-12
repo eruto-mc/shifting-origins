@@ -50,6 +50,7 @@ public final class ShiftingOrigins {
     net.minecraftforge.common.MinecraftForge.EVENT_BUS.register(ClassPowers.class);
     net.minecraftforge.common.MinecraftForge.EVENT_BUS.register(PotionSharing.class);
     net.minecraftforge.common.MinecraftForge.EVENT_BUS.register(OriginChangeCancel.class);
+    net.minecraftforge.common.MinecraftForge.EVENT_BUS.register(OriginLayerGuard.class);
   }
 
   private static void onConfigLoad(final ModConfigEvent event) {
@@ -67,6 +68,8 @@ public final class ShiftingOrigins {
     public static final ForgeConfigSpec.DoubleValue SHARE_RADIUS_H;
     public static final ForgeConfigSpec.DoubleValue SHARE_RADIUS_V;
     public static final ForgeConfigSpec.ConfigValue<java.util.List<? extends String>> SHARE_CATEGORIES;
+    public static final ForgeConfigSpec.BooleanValue GUARD_ENABLED;
+    public static final ForgeConfigSpec.IntValue GUARD_GRACE_TICKS;
 
     static {
       ForgeConfigSpec.Builder b = new ForgeConfigSpec.Builder();
@@ -110,6 +113,22 @@ public final class ShiftingOrigins {
           .defineList("categories", java.util.List.of("BENEFICIAL", "NEUTRAL"),
               o -> o instanceof String s2
                   && (s2.equals("BENEFICIAL") || s2.equals("NEUTRAL") || s2.equals("HARMFUL")));
+      b.pop();
+      b.comment("Safety net for players left with an empty origin layer. While a layer is empty",
+              "Origins makes the player invulnerable to every damage type, which is meant as",
+              "protection while the choose-origin screen is up. /origin gui empties the layer",
+              "without ever opening that screen, so the player is stuck invulnerable instead.",
+              "This puts the layer's default origin back, using the same call the login handler",
+              "uses. A selection started from an orb is left alone.")
+          .push("originGuard");
+      GUARD_ENABLED = b
+          .comment("Whether to put the default origin back.")
+          .define("enabled", true);
+      GUARD_GRACE_TICKS = b
+          .comment("How long a layer has to stay empty before the default origin goes back in.",
+              "Do not set this to 0: another mod may empty a layer for a moment before writing",
+              "the new origin, and this net would win that race.")
+          .defineInRange("graceTicks", 60, 20, 12000);
       b.pop();
       SPEC = b.build();
     }
