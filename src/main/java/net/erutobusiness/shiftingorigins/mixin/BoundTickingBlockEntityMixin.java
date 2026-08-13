@@ -41,6 +41,21 @@ public abstract class BoundTickingBlockEntityMixin<T extends BlockEntity> {
     if (this.blockEntity.isRemoved() || !this.blockEntity.hasLevel()) {
       return;
     }
+    // ⚠⚠ **押し直しの猶予を食い潰さないように、先に「勢い」を1つ戻す**（2026-08-13 追加）。
+    //
+    // 実測で分かったこと（台本 cook-noui）: `farm_and_charm` の混ぜ鉢・ミンサーは
+    //   use  … 勢い（stirring / crank）を 10 に立てる。勢い > 6 の間は押しても無視
+    //   tick … 勢い > 0 なら累計 +1、勢い -1。**勢いが 0 になると累計が 0 に戻る**
+    // という作りなので、もう1回 tick を回すと**累計も勢いも2倍で動く**。
+    // 結果、押し直しの窓が 4〜9 → **2〜4 ティック**に狭まり、
+    // **「速くなる」はずの料理人が、画面の無い台では一番不利**になっていた
+    // （待ち8で対照は stirred=50 に到達、料理人は 0 のまま。待ち4でも 40 まで行って切れた）。
+    //
+    // だから**余分な tick の前に勢いを1つ戻す**。こうすると
+    //   累計 … 1ゲームtickに 2 進む（狙いどおり速い）
+    //   勢い … 1ゲームtickに 1 減る（＝素と同じ。窓が狭まらない）
+    // ⚠ 上限に張り付いているときは戻せないので、そのぶんは素と同じ速さになる（害は無い）。
+    CookSpeed.keepMomentum(this.blockEntity);
     this.ticker.tick(this.blockEntity.getLevel(), this.blockEntity.getBlockPos(),
         this.blockEntity.getBlockState(), this.blockEntity);
   }

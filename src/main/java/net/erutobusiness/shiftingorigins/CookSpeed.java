@@ -4,6 +4,7 @@ import java.util.Set;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.CampfireBlockEntity;
 import net.minecraft.world.level.block.entity.SmokerBlockEntity;
 
 /**
@@ -91,7 +92,16 @@ public final class CookSpeed {
     if (be == null || be.getLevel() == null || be.getLevel().isClientSide) {
       return false;
     }
+    // ⚠ **焚火を足した（2026-08-13・部長の指摘）。** 許可リストは
+    //   `list_cooking_stations.py` の出力を貼ったもので、その道具のバニラの許可は
+    //   **燻製器だけ**だった（かまど・溶鉱炉は意図的に除外）。焚火は候補に挙がって
+    //   いなかっただけで、外す判断をしたわけではない。
+    // ⚠ 焚火は進み具合を**ブロックエンティティの中**（`CookingTimes`）に持ち、
+    //   混ぜ鉢のような「勢いが0になると全部消える」型ではないので、
+    //   もう1回 tick を回すだけで素直に倍速になる（実測は台本 origins-cook の
+    //   `cook-campfire-speed-*`）。⚠ 魂の焚火も同じクラスなので一緒に効く。
     boolean isStation = be instanceof SmokerBlockEntity
+        || be instanceof CampfireBlockEntity
         || STATIONS.contains(be.getClass().getSimpleName());
     if (!isStation) {
       return false;
@@ -106,5 +116,52 @@ public final class CookSpeed {
       }
     }
     return false;
+  }
+  /**
+   * 「押し直しの勢い」を表すブロックの状態の名前。
+   *
+   * <p>⚠ <b>クラスではなく状態の名前で見る。</b> 相手MODのクラスを参照すると依存が増えるうえ、
+   * 同じ作りの台が他のMODに出ても拾えない。名前で見れば
+   * 「勢いを立てて減らす」型の台に一律で効く。
+   */
+  private static final Set<String> MOMENTUM = Set.of("stirring", "crank");
+
+  /**
+   * 余分な tick で<b>勢いが2倍に減るのを打ち消す</b>（先に1つ戻す）。
+   *
+   * <p>なぜ要るか（2026-08-13 実測・台本 cook-noui）:
+   * `farm_and_charm` の混ぜ鉢・ミンサーは<b>勢いが 0 になると累計が 0 に戻る</b>作りなので、
+   * tick を2回回すと累計も勢いも2倍で動き、
+   * <b>押し直しの窓が 4〜9 → 2〜4 ティックへ狭まる</b>。
+   * 実測では、対照（なまけ者・待ち8）が `stirred=50` に届いたのに
+   * 料理人は 0 のままで、待ち4でも 40 まで進んで切れた。
+   * <b>「速くなる」はずの職業が一番不利</b>という逆転が起きていた。
+   *
+   * <p>ここで勢いを1つ戻すと、1ゲームtickあたり <b>累計 +2 ／ 勢い -1</b> になる。
+   * つまり<b>窓は素のまま・進みは2倍</b>。
+   *
+   * <p>⚠ 上限に張り付いているときは戻せない（そのぶんは素と同じ速さ。害は無い）。
+   * ⚠ 状態を書くのは<b>値が変わるときだけ</b>——毎tick `setBlock` を撃つと
+   * 近くのプレイヤー全員へ便りが飛ぶ。
+   */
+  public static void keepMomentum(BlockEntity be) {
+    if (be == null || be.getLevel() == null || be.getLevel().isClientSide()) {
+      return;
+    }
+    net.minecraft.core.BlockPos pos = be.getBlockPos();
+    net.minecraft.world.level.block.state.BlockState state = be.getLevel().getBlockState(pos);
+    for (net.minecraft.world.level.block.state.properties.Property<?> p : state.getProperties()) {
+      if (!(p instanceof net.minecraft.world.level.block.state.properties.IntegerProperty ip)
+          || !MOMENTUM.contains(ip.getName())) {
+        continue;
+      }
+      int now = state.getValue(ip);
+      int max = ip.getPossibleValues().stream().mapToInt(Integer::intValue).max().orElse(now);
+      if (now <= 0 || now >= max) {
+        continue;
+      }
+      be.getLevel().setBlock(pos, state.setValue(ip, now + 1), 3);
+      return;
+    }
   }
 }
