@@ -29,7 +29,7 @@ import org.slf4j.LoggerFactory;
  *
  * <p>台ごとに当てる形は、MOD を足すたびに増えるうえ、相手の版が上がると黙って外れる。
  * そこで<b>食べ物がプレイヤーへ渡る出口</b>を押さえる形にした。
- * ⚠ 出口は数えたら<b>5か所</b>だった（`verify/check_cook_paths.py` が毎回数える）:
+ * ⚠ 出口は数えたら<b>5か所</b>だった（作者環境の検査 `check_cook_paths` が毎回数える。この repo には無い）:
  *
  * <pre>
  *   Slot#onTake            画面から取り出す（SlotItemHandler も Slot の子）
@@ -97,7 +97,7 @@ public final class CookMark {
    * チーズ搾りと樽の 7200 を取りこぼす値だった。</b>
    *
    * <p>⚠ <b>MODを足したら数え直す。</b>
-   * {@code py verify/check_cook_window.py} が数えて、この値を超えていたら止める。
+   * 作者環境の検査（{@code check_cook_window}・この repo には無い）が数えて、この値を超えていたら止める。
    */
   private static final long WINDOW_COOK = 9600L;
 

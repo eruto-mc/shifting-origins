@@ -210,7 +210,7 @@ Esc ─→ shouldCloseOnEsc()==true ┐
 > 足りなかったのは**触る**手だけで、それは3本足せば済んだ。
 > 「画面は機械で触れない」と決めつけて、**在る道具を確かめずに人へ送っていた。**
 
-台本 `shifting-origins`（`py verify/run_probe_client.py --scenario shifting-origins`）が見ている:
+台本 `shifting-origins`（**作者環境の検証基盤**にある。この repo には入っていない）が見ている:
 
 | 判定 | 何を見るか |
 | - | - |
@@ -273,11 +273,11 @@ export JAVA_HOME=/path/to/jdk-17      # JDK 17 ならどれでもよい
   片側だけに置くと、持っていない側が `Failed to load registry` で弾かれる（2026-08-04 に実際に踏んだ）
 - ⚠ **`pack.mcmeta` が要る**。無いとクライアントが起動途中で止まる（`Missing metadata in pack`
   という警告が1行出るだけで、原因が非常に分かりにくい）
-- どちらも `py verify/check_custom_mods.py` が機械で出す
+- どちらも作者環境の検査 `check_custom_mods` が機械で出す（この repo には入っていない）
 
 ## 確かめ方
 
-`py verify/run_probe_client.py --scenario paced-multimine --server`
+台本 `paced-multimine`（同じく作者環境の検証基盤）
 
 台本が見ているもの（2026-08-04 に拡張）:
 

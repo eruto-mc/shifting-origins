@@ -36,7 +36,7 @@ import net.minecraftforge.fml.common.Mod;
  * <p>どちらも「自分で満腹度を足して {@code ci.cancel()}」という<b>相手にとっては正しい実装</b>で、
  * 取り消しは<b>そこで {@code eat} から抜ける</b>ので、注入の順番を変えても届かない。
  * ⚠ <b>エラーもログも出ない。効かなくなるだけ。</b>
- * 誰が取り消しうるかは {@code py verify/check_eat_path.py} が数える。
+ * 誰が取り消しうるかは作者環境の検査（{@code check_eat_path}・この repo には無い）が数える。
  *
  * <p>⚠ 取り消されても<b>満腹度 +25% は生きている</b>——相手は取り消す前に
  * {@code getFoodProperties} を呼び直しており、そこに apoli の coremod が差し込まれているため。
