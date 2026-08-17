@@ -23,7 +23,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 /**
- * 珠（Orb of Origin）に手を入れる2件。
+ * 珠（Orb of Origin）に手を入れる3件。
  *
  * <h2>1. 説明欄の「」を直す</h2>
  *
@@ -42,6 +42,30 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
  *
  * <p>詳細は {@link OriginChangeCancel}。ここは「層が空にされる前に控える」ことだけを担う。
  *
+ * <h2>3. 重ねられるようにする（2026-08-17 追加）</h2>
+ *
+ * <p>上流はコンストラクタで {@code new Item.Properties().stacksTo(1)} と<b>焼き込んで</b>いる
+ * （bytecode: {@code iconst_1} → {@code m_41487_}）。当部は珠を実績の褒美として配るので、
+ * 1個ずつ枠を潰されると持ち物が埋まる。
+ *
+ * <p>⚠ <b>上流の値を書き換えるのではなく、Forge の拡張を上書きする。</b>
+ * バニラの {@code Item#getMaxStackSize()} は <b>{@code final}</b> で、実体の
+ * {@code Item.f_41370_} も {@code private final} なので、どちらも触れない。
+ * ところが<b>パッチ後の</b> {@code ItemStack#getMaxStackSize()} は
+ * {@code Item.getMaxStackSize(ItemStack)}（Forge が足した既定メソッド）を呼んでいる
+ * ——だから<b>そちらを上書きすれば効く</b>。
+ * 確認: {@code forge-1.20.1-47.4.22-server.jar} の {@code ItemStack.m_41741_} が
+ * {@code invokevirtual Item.getMaxStackSize:(Lnet/minecraft/world/item/ItemStack;)I}。
+ *
+ * <p>⚠ <b>使ったときに溶けないことを先に確かめてある。</b> 上流の {@code use} は
+ * {@code isCreative()} でなければ {@code shrink(1)} を呼ぶ（bytecode: {@code iconst_1} →
+ * {@code m_41774_}）ので、<b>重なっていても1個ずつ減る</b>。
+ * {@link OriginChangeCancel} の返却も {@code setCount(1)} なので噛み合う。
+ *
+ * <p>⚠⚠ <b>NBT が違う珠は互いに重ならない</b>（バニラの決まり）。当部の珠は
+ * {@code Targets} に層を持つので、<b>同じ層を指す珠同士だけが重なる</b>——
+ * 「種族の珠」×64 と「職業の珠」×64 は別の山になる。これは仕様で、直せない。
+ *
  * <p>⚠ <b>メソッドは難読化後の名前で指定して {@code remap = false} にする。</b>
  * {@code m_7203_}＝{@code use} / {@code m_7373_}＝{@code appendHoverText}。
  * 出荷済みの origins jar は既に SRG 名なので、名前の付け替えを挟まないほうが確実に当たる。
@@ -49,8 +73,26 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(OrbOfOriginItem.class)
 public abstract class OrbOfOriginItemMixin {
 
+  /** 珠を重ねられる上限。⚠ 変えるときは上の「3.」の注意を読む。 */
+  private static final int STACK_LIMIT = 64;
+
   @Invoker(value = "getTargets", remap = false)
   abstract Map<OriginLayer, Origin> shiftingorigins$targets(ItemStack stack);
+
+  /**
+   * Forge の {@code IForgeItem#getMaxStackSize(ItemStack)} を上書きする。
+   *
+   * <p>⚠ <b>名前を {@code shiftingorigins$} で飾ってはいけない。</b>
+   * 上書きが成り立つのは名前が一致しているからで、飾ると「ただの新しいメソッド」になり
+   * <b>誰も呼ばないまま静かに効かなくなる</b>。
+   *
+   * <p>⚠ 上流の {@code OrbOfOriginItem} はこのメソッドを持っていないので、衝突しない
+   * （{@code javap} で全メソッドを確認済み: {@code <init>} / {@code m_7203_} /
+   * {@code m_7373_} / {@code getTargets} と lambda 2本だけ）。
+   */
+  public int getMaxStackSize(ItemStack stack) {
+    return STACK_LIMIT;
+  }
 
   @Inject(method = "m_7373_", at = @At("HEAD"), cancellable = true, remap = false)
   private void shiftingorigins$readableTooltip(ItemStack stack, Level level,
