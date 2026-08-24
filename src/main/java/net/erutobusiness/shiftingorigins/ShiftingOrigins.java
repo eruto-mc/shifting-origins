@@ -51,6 +51,7 @@ public final class ShiftingOrigins {
     net.minecraftforge.common.MinecraftForge.EVENT_BUS.register(PotionSharing.class);
     net.minecraftforge.common.MinecraftForge.EVENT_BUS.register(OriginChangeCancel.class);
     net.minecraftforge.common.MinecraftForge.EVENT_BUS.register(OriginLayerGuard.class);
+    net.minecraftforge.common.MinecraftForge.EVENT_BUS.register(SkeletonShy.class);
   }
 
   private static void onConfigLoad(final ModConfigEvent event) {
@@ -70,6 +71,8 @@ public final class ShiftingOrigins {
     public static final ForgeConfigSpec.ConfigValue<java.util.List<? extends String>> SHARE_CATEGORIES;
     public static final ForgeConfigSpec.BooleanValue GUARD_ENABLED;
     public static final ForgeConfigSpec.IntValue GUARD_GRACE_TICKS;
+    public static final ForgeConfigSpec.BooleanValue SKELETON_SHY;
+    public static final ForgeConfigSpec.DoubleValue SKELETON_SHY_DISTANCE;
 
     static {
       ForgeConfigSpec.Builder b = new ForgeConfigSpec.Builder();
@@ -129,6 +132,19 @@ public final class ShiftingOrigins {
               "Do not set this to 0: another mod may empty a layer for a moment before writing",
               "the new origin, and this net would win that race.")
           .defineInRange("graceTicks", 60, 20, 12000);
+      b.pop();
+      b.comment("Skeletons back away from the club's beastfolk_dog origin, the way vanilla",
+              "skeletons back away from wolves. Vanilla hard-codes Wolf.class in",
+              "AbstractSkeleton.registerGoals, so a datapack cannot put a player in that slot.",
+              "The numbers below are vanilla's own: 6 blocks, walk 1.0, sprint 1.2, priority 3.")
+          .push("skeletonShy");
+      SKELETON_SHY = b
+          .comment("Whether skeletons avoid the dog beastfolk.")
+          .define("enabled", true);
+      SKELETON_SHY_DISTANCE = b
+          .comment("How far away a skeleton starts backing off, in blocks. Vanilla uses 6.0 for",
+              "wolves. Raising this makes skeleton-heavy areas much easier for the dog.")
+          .defineInRange("distance", 6.0D, 1.0D, 32.0D);
       b.pop();
       SPEC = b.build();
     }
