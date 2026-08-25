@@ -92,14 +92,23 @@ public final class CookMark {
    *    600 tick（30秒）… バニラの campfire_cooking
    * </pre>
    *
-   * <p>最大 7200 に余裕をみて <b>9600</b>（8分）。
+   * <p>最大 7200 に余裕をみて <b>9600</b>（8分）としていたが、
+   * <b>2026-08-25 に 14400（12分）へ広げた</b>。
+   *
+   * <p>⚠ きっかけは `botanypots` の栽培で <b>12000 tick</b>（ヒマワリ）が在ったこと。
+   * ⚠ 印は {@code stack.isEdible()} の物にしか押さないので、
+   * <b>ヒマワリの種をプレイヤーが食べられるかどうか</b>が分かれ目だったが、
+   * ⚠⚠ <b>jar からは決めきれなかった</b>（逆アセンブルで3回外した）。
+   * → ⚠ <b>どちらでも正しい側</b>（広げる側）を採った。
+   * ⚠ 広げる害は「右クリックした場所を覚える時間が 8分→12分に伸びる」だけで、
+   * {@code LOADED} は座標を鍵にした Map、触るたびに古い分を捨てている。
    * ⚠ <b>最初は 2400（2分）と書いた。焚き火の 600 しか見ておらず、
    * チーズ搾りと樽の 7200 を取りこぼす値だった。</b>
    *
    * <p>⚠ <b>MODを足したら数え直す。</b>
    * 作者環境の検査（{@code check_cook_window}・この repo には無い）が数えて、この値を超えていたら止める。
    */
-  private static final long WINDOW_COOK = 9600L;
+  private static final long WINDOW_COOK = 14400L;
 
   private static final Logger LOG = LoggerFactory.getLogger("shiftingorigins");
 
