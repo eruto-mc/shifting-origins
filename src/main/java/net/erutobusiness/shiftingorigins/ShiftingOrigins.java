@@ -52,6 +52,9 @@ public final class ShiftingOrigins {
     net.minecraftforge.common.MinecraftForge.EVENT_BUS.register(OriginChangeCancel.class);
     net.minecraftforge.common.MinecraftForge.EVENT_BUS.register(OriginLayerGuard.class);
     net.minecraftforge.common.MinecraftForge.EVENT_BUS.register(SkeletonShy.class);
+    // ⚠ 能力名の横に自動で付く印（A / T / R）を、画面へ出る前に外す。
+    //   ⚠ datapack では消せない（消しても内蔵の絵で足される）。理由は AutoBadgeStrip の説明。
+    net.minecraftforge.common.MinecraftForge.EVENT_BUS.register(AutoBadgeStrip.class);
   }
 
   private static void onConfigLoad(final ModConfigEvent event) {

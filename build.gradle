@@ -14,7 +14,7 @@ plugins {
 
 apply plugin: 'org.spongepowered.mixin'
 
-version = '1.6.2'
+version = '1.6.3'
 group = 'net.erutobusiness'
 base { archivesName = 'shifting_origins' }
 
@@ -54,6 +54,12 @@ dependencies {
     //    上流を指すと**実際に動くものと違う API でコンパイル**することになる。
     //    当部パッチ版のソースは eruto-mc/... には無く、instance/mods の実物が正。
     compileOnly files('libs/origins.jar')
+    // ⚠ Calio。`Badge` が `DataObject<Badge>` を継承しているので、
+    //   `AutoBadgeStrip` が `Badge` を触るだけで親の型が要る（無いと
+    //   「DataObject にアクセスできません」でコンパイルが落ちる）。
+    // ⚠ **上流の maven を指さない。** 実際に動くのは当部パッチ版 origins が
+    //   同梱している版なので、⚠ **その jar の中（META-INF/jarjar）から取り出したもの**を置く。
+    compileOnly files('libs/calio.jar')
 }
 
 jar {
