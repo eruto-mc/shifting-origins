@@ -9,8 +9,9 @@ import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.ExperienceOrb;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import org.slf4j.Logger;
@@ -45,6 +46,15 @@ public final class HarvestWithEaseBonus {
 
   private static final Logger LOG = LoggerFactory.getLogger("shiftingorigins");
 
+  /**
+   * 右クリック収穫1回ぶんの経験値（農家だけ）。
+   *
+   * <p>⚠ 手で壊したときに XP From Harvest が配る量（`XP Amount = 1`）に合わせてある。
+   * ⚠ <b>Harvest with Ease の {@code exp on harvest} は使わない</b>——
+   * あれは職業を見ずに<b>全員へ配る</b>設定なので、農家の特典にならない（2026-08-27）。
+   */
+  private static final int HARVEST_XP = 1;
+
   private HarvestWithEaseBonus() {
   }
 
@@ -56,9 +66,21 @@ public final class HarvestWithEaseBonus {
     }
     ServerLevel level = event.getLevel();
     BlockPos pos = event.getPos();
-    BlockState crop = event.getCrop();
 
-    int copies = extraCopies(player, level, pos, crop);
+    // ⚠ 上流と同じ経路で「一式を何倍にするか」の素の値を取る。
+    //    ⚠ **1.0 のままなら、その人は農家の power を持っていない**（誰でも通る道なので）。
+    float value = dropMultiplier(player);
+    boolean isFarmer = value > 1.0F;
+
+    // ⚠⚠ **経験値は農家だけ**（2026-08-27・あなたの指摘
+    //    「exp on harvest をただ ON にしたら農家以外でも経験値をもらえちゃわない？」）。
+    //    ⚠ Harvest with Ease の `exp on harvest` は**全員に配る設定**なので使えない。0 のまま。
+    //    ⚠ 量は 1——手で壊したときに XP From Harvest が配る量と同じにする。
+    if (isFarmer) {
+      ExperienceOrb.award(level, Vec3.atCenterOf(pos), HARVEST_XP);
+    }
+
+    int copies = rollCopies(level, value);
     if (copies <= 1) {
       return;
     }
@@ -88,11 +110,13 @@ public final class HarvestWithEaseBonus {
    * ⚠ <b>もし将来 {@code modify_block_loot} を「作物以外」に配ったら、ここは誤爆する。</b>
    * そのときはこの注記ごと見直すこと。
    */
-  private static int extraCopies(ServerPlayer player, ServerLevel level, BlockPos pos,
-                                 BlockState crop) {
+  private static float dropMultiplier(ServerPlayer player) {
     ModifyValueBlockPower factory =
         (ModifyValueBlockPower) OriginsClassesPowers.MODIFY_BLOCK_LOOT.get();
-    float value = IPowerContainer.modify(player, factory, 1.0F);
+    return IPowerContainer.modify(player, factory, 1.0F);
+  }
+
+  private static int rollCopies(ServerLevel level, float value) {
     int whole = (int) value;
     return level.random.nextDouble() < value - whole ? whole + 1 : whole;
   }
