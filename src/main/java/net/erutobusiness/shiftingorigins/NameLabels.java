@@ -234,6 +234,46 @@ public final class NameLabels {
         mirrorOne(server, sb, source, ensureMirror(sb, source));
       }
     }
+    dropOrphansEverywhere(sb);
+  }
+
+  /**
+   * 点の元が消えた人の行を、<b>出していない項目からも</b>落とす。
+   *
+   * <p>⚠⚠ {@link #mirrorOne} の始末は<b>いま居る人のぶんだけ</b>で、しかも
+   * <b>表示枠に出ている項目にしか回らない</b>。だから<b>居ない間に点を消された人</b>の行は
+   * 誰にも消せず永久に残る。2026-08-28 に実際に残った——世界を差し替えて
+   * {@code playerdata} を消したとき、その人はオフラインだったので
+   * {@code [ヴァルキリー・ニート] エルト} の行が 8 項目に残り、
+   * <b>入り直して種族を変えても、その行だけ古い種族のまま並ぶ</b>状態になっていた。
+   *
+   * <p>⚠ 落とすのは「元の {@code club.*} に点が無い人」だけ。
+   * <b>オフラインでも点が在る人の行は残す</b>（それがこの鏡の目的なので）。
+   */
+  private static void dropOrphansEverywhere(Scoreboard sb) {
+    for (Objective mirror : new ArrayList<>(sb.getObjectives())) {
+      String name = mirror.getName();
+      if (!name.startsWith(MIRROR_PREFIX)) {
+        continue;
+      }
+      Objective source = sb.getObjective(SRC_PREFIX + name.substring(MIRROR_PREFIX.length()));
+      if (source == null) {
+        continue;
+      }
+      Set<String> alive = new HashSet<>();
+      for (Score s : sb.getPlayerScores(source)) {
+        String owner = s.getOwner();
+        if (owner != null && !owner.startsWith("#")) {
+          alive.add(owner);
+        }
+      }
+      for (Score s : new ArrayList<>(sb.getPlayerScores(mirror))) {
+        String holder = s.getOwner();
+        if (holder != null && !alive.contains(plainName(holder))) {
+          sb.resetPlayerScore(holder, mirror);
+        }
+      }
+    }
   }
 
   private static Objective ensureMirror(Scoreboard sb, Objective source) {
