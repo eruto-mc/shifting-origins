@@ -126,8 +126,12 @@ public final class CookMark {
     LOADED.put(pos.immutable(), new LoadedBy(player.getUUID(), now));
     // ⚠ 触るたびに古い分を捨てる。⚠ **溜めっぱなしにしない**（台の数だけ増え続ける）
     LOADED.entrySet().removeIf(e -> now - e.getValue().at() > WINDOW_COOK);
-    LOG.info("[cook] 台を触った: {} @ {}（控えている台 {} 個）",
-        player.getGameProfile().getName(), pos, LOADED.size());
+    // ⚠⚠ **右クリックのたびに1行**。本番では3時間で 7,346 行だった（2026-08-28）。
+    //    ⚠ 既定では黙る（`verboseLogs`）。調べるときだけ入れる。
+    if (ShiftingOrigins.Config.verbose()) {
+      LOG.info("[cook] 台を触った: {} @ {}（控えている台 {} 個）",
+          player.getGameProfile().getName(), pos, LOADED.size());
+    }
   }
 
   /**
@@ -192,7 +196,9 @@ public final class CookMark {
     }
     ModifyCraftedFoodPower.modify(player, stack,
         ModifyCraftResultEvent.CraftingResultType.CRAFTING);
-    LOG.info("[cook] 印を押した: {} -> {} / tag={}", player.getGameProfile().getName(),
-        stack, stack.getTag());
+    if (ShiftingOrigins.Config.verbose()) {
+      LOG.info("[cook] 印を押した: {} -> {} / tag={}", player.getGameProfile().getName(),
+          stack, stack.getTag());
+    }
   }
 }

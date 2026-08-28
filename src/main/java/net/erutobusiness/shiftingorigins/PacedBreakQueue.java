@@ -55,8 +55,10 @@ public final class PacedBreakQueue {
       return false;   // 0 なら横取りしない＝上流どおり同じ tick で全部壊れる
     }
     Job job = new Job(serverPlayer, origin, positions);
-    LOG.info("[paced] 横取り {} 個（{}）1回 {} 個 / {} tick ごと", positions.size(),
-        serverPlayer.getGameProfile().getName(), job.batch, job.interval);
+    if (ShiftingOrigins.Config.verbose()) {
+      LOG.info("[paced] 横取り {} 個（{}）1回 {} 個 / {} tick ごと", positions.size(),
+          serverPlayer.getGameProfile().getName(), job.batch, job.interval);
+    }
     JOBS.put(serverPlayer.getUUID(), job);
     return true;
   }

@@ -44,9 +44,12 @@ public abstract class InventoryMixin {
       return;
     }
     boolean near = CookMark.nearLastUse(sp, sp.getX(), sp.getY(), sp.getZ());
-    org.slf4j.LoggerFactory.getLogger("shiftingorigins")
-        .info("[cook] 持ち物へ入る: {} near={} item={}",
-            sp.getGameProfile().getName(), near, stack);
+    // ⚠⚠ **食べ物を拾うたびに1行**。本番では3時間で 3,874 行だった（2026-08-28）。
+    if (net.erutobusiness.shiftingorigins.ShiftingOrigins.Config.verbose()) {
+      org.slf4j.LoggerFactory.getLogger("shiftingorigins")
+          .info("[cook] 持ち物へ入る: {} near={} item={}",
+              sp.getGameProfile().getName(), near, stack);
+    }
     if (!near) {
       return;
     }

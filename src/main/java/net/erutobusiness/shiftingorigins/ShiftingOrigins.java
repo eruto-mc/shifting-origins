@@ -90,6 +90,7 @@ public final class ShiftingOrigins {
     public static final ForgeConfigSpec.BooleanValue LAVA_BOTTLE_DRINK;
     public static final ForgeConfigSpec.IntValue LAVA_BOTTLE_THIRST;
     public static final ForgeConfigSpec.DoubleValue LAVA_BOTTLE_HYDRATION;
+    public static final ForgeConfigSpec.BooleanValue VERBOSE_LOGS;
 
     static {
       ForgeConfigSpec.Builder b = new ForgeConfigSpec.Builder();
@@ -214,7 +215,25 @@ public final class ShiftingOrigins {
           .comment("Hydration restored. Purified water bottle is 80.")
           .defineInRange("hydration", 80.0D, 0.0D, 100.0D);
       b.pop();
+
+      // ⚠⚠ **調査用の出力を既定で黙らせる**（2026-08-29・本番で分かった）。
+      //    2026-08-28 の開始日、⚠ **サーバのログの 90%（3時間で 11,900 行）が
+      //    この MOD の出力**だった（右クリックごと・拾得ごとに1行）。
+      //    ⚠ 遅れの原因ではなかったが、**部員の座標と行動が全部残り**、
+      //    ⚠ **本当に見たい行が埋まる**（実際、原因を調べるとき掻き分ける羽目になった）。
+      //    ⚠ 消さずに残すのは、どれも切り分けに要った出力だから。
+      VERBOSE_LOGS = b
+          .comment("Log every cook-station touch, item pickup and paced-break batch.",
+              "Off by default: on a live server this is thousands of lines an hour and",
+              "buries the lines you actually want. Turn on only while investigating.")
+          .define("verboseLogs", false);
+
       SPEC = b.build();
+    }
+
+    /** ⚠ 調査用の出力を出すか。⚠ **既定は false**（上の理由）。 */
+    public static boolean verbose() {
+      return VERBOSE_LOGS != null && VERBOSE_LOGS.get();
     }
 
     private Config() {
