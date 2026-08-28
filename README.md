@@ -12,6 +12,7 @@ Origins（種族）と Origins: Classes（職業）を、**一度きりの選択
 | **珠の説明欄を読める文にする** | 「種族を『』にする。」と出ていたのを直す（2026-08-07 追加） |
 | **スケルトンがイヌ獣人から逃げる** | バニラがオオカミへ使っている目標を、同じ数字でスケルトンへ足す（2026-08-24 追加。下記） |
 | **人に乗っているあいだ、相手の名前札を消す** | ピクシーが頭に乗ると名前札が目の前に貼り付くので、**乗っている本人の画面からだけ**消す（2026-08-27 追加。下記） |
+| **`[種族・職業]` を Tab とサイドバーにだけ出す** | 名札・チャット・死亡メッセージには出さない（2026-08-28 追加。下記） |
 
 ## 人に乗っているあいだ、相手の名前札を消す（2026-08-27）
 
@@ -347,3 +348,70 @@ export JAVA_HOME=/path/to/jdk-17      # JDK 17 ならどれでもよい
 | `pmm-leaves-gone` | 伐採から十分待つと**葉が1枚も残っていない**＝FastLeafDecay と噛み合っている |
 | `pmm-ore-connected` | **C の字に曲げた鉱脈**を掘り、直線では近いが繋がりでは遠い端が**まだ残っている**＝壊れ方が飛んでいない |
 | `pmm-ore-done` | 鉱脈も最後まで掘り切れる（陽性対照） |
+
+## `[種族・職業]` を Tab とサイドバーにだけ出す（2026-08-28）
+
+それまでは datapack（`worlds/world-3/datapacks/club_stats`）が**チームの prefix** に飾りを入れていた。
+prefix を読むのは `PlayerTeam.formatNameForTeam` で、これを呼ぶのは
+
+| どこ | |
+| - | - |
+| サイドバー | 狙っているところ |
+| Tab の一覧 | 狙っているところ |
+| ⚠ 頭上の名札 | 出したくない |
+| ⚠ チャット・死亡メッセージ | 出したくない |
+
+の4か所。**1つの値を4か所が共有しているので出し分けができない。**
+⚠ Forge の `PlayerEvent.NameFormat` でも消せない——patched な `Player.getDisplayName()` は、
+あのイベントの**後で** `formatNameForTeam` を呼ぶ（bytecode で確認）。
+
+### 面ごとに道が違う（1.20.1 の bytecode で確認）
+
+**Tab** … `PlayerTabOverlay.getNameForDisplay`（難読名 `eqg.a(ffb)`）の分岐は2本で、
+`PlayerInfo.getTabListDisplayName()` が null でなければ**それを使って `return`**する。
+`formatNameForTeam` を通らないので、`PlayerEvent.TabListNameFormat` で入れれば**そこだけ**に出せる。
+貼り直しは `ServerPlayer.refreshTabListName()`（Forge 追加）で、
+**名前が変わったときだけ**全員へ `ClientboundPlayerInfoUpdatePacket` が飛ぶ。
+
+**サイドバー** … 左の列は `formatNameForTeam` を通る。サーバ側から出し分ける手は無い。
+そこで**飾りを「点の持ち主の名前」そのものにする**——サイドバーが並べているのは
+持ち主の文字列で、実在のプレイヤー名である必要が無い。
+
+| 心配 | 実際（javap で確認） |
+| - | - |
+| 持ち主の名前に長さ制限があるのでは | `Scoreboard.getOrCreatePlayerScore` は `computeIfAbsent` を2回呼ぶだけ。検査は無い。40文字の制限は `/scoreboard` コマンドの引数側だけ |
+| 通信で切られるのでは | `ClientboundSetScorePacket` は `writeUtf`（既定 32767） |
+| 仮の持ち主として隠されるのでは | バニラが隠すのは `#` で始まる名前。`[` は描かれる |
+
+### オフラインの人も並ぶ（これが目的）
+
+点は `scoreboard.dat` に残るので、**ログインしていない人の行も消えない**。
+⚠ ただし**一度もログインしていない人には飾りが付かない**（種族はオンラインのときにしか読めない）。
+入れば次の秒で付く。
+
+### 和名は jar に焼いてある
+
+サイドバーへ出すのは**ただの文字列**なので `Component.translatable` が使えず、
+⚠ 専用サーバの `Language` は jar の en_us しか持たない。だから和名をサーバ側が持つしかない。
+
+⚠⚠ **`data/shiftingorigins/origin_names.json` を手で書かない。**
+`worlds/world-3/dev/work/export_origin_names.py` が、部員へ配る早見表と**同じ窓口**
+（`handouts/build_origins_sheet.py` → `dev/work/ja_lang.py`）から書き出す。
+種族・職業を足したり和名を直したら、あの script を回して jar を作り直す。
+
+### ⚠ 止め方（配布物の作り直しは要らない）
+
+`config/shiftingorigins-server.toml`:
+
+```toml
+[nameLabels]
+    enabled = false
+```
+
+これで
+
+1. 表示枠が `view.*` から元の `club.*` へ戻る
+2. 旗（`#labels club.const`）が 0 に降り、datapack が**数秒で prefix を書き戻す**
+
+⚠ **旗が無いときは datapack が今までどおり飾る**（`unless ... matches 1`）。
+MOD が入っていない世界・MOD を止めた世界では、古い見え方へ倒れる。

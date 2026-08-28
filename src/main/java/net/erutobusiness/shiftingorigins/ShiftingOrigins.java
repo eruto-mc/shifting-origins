@@ -52,6 +52,9 @@ public final class ShiftingOrigins {
     net.minecraftforge.common.MinecraftForge.EVENT_BUS.register(OriginChangeCancel.class);
     net.minecraftforge.common.MinecraftForge.EVENT_BUS.register(OriginLayerGuard.class);
     net.minecraftforge.common.MinecraftForge.EVENT_BUS.register(SkeletonShy.class);
+    // ⚠ `[種族・職業]` を Tab とサイドバーにだけ出す。名札・チャット・死亡メッセージには出さない。
+    //   ⚠ 止め方は config の nameLabels.enabled（datapack 側が数秒で元へ戻る）。理由は NameLabels。
+    net.minecraftforge.common.MinecraftForge.EVENT_BUS.register(NameLabels.class);
     // ⚠ 能力名の横に自動で付く印（A / T / R）を、画面へ出る前に外す。
     //   ⚠ datapack では消せない（消しても内蔵の絵で足される）。理由は AutoBadgeStrip の説明。
     net.minecraftforge.common.MinecraftForge.EVENT_BUS.register(AutoBadgeStrip.class);
@@ -76,6 +79,9 @@ public final class ShiftingOrigins {
     public static final ForgeConfigSpec.IntValue GUARD_GRACE_TICKS;
     public static final ForgeConfigSpec.BooleanValue SKELETON_SHY;
     public static final ForgeConfigSpec.DoubleValue SKELETON_SHY_DISTANCE;
+    public static final ForgeConfigSpec.BooleanValue LABELS_ENABLED;
+    public static final ForgeConfigSpec.BooleanValue LABELS_TAB;
+    public static final ForgeConfigSpec.BooleanValue LABELS_SIDEBAR;
 
     static {
       ForgeConfigSpec.Builder b = new ForgeConfigSpec.Builder();
@@ -148,6 +154,26 @@ public final class ShiftingOrigins {
           .comment("How far away a skeleton starts backing off, in blocks. Vanilla uses 6.0 for",
               "wolves. Raising this makes skeleton-heavy areas much easier for the dog.")
           .defineInRange("distance", 6.0D, 1.0D, 32.0D);
+      b.pop();
+      b.comment("Show [origin/class] next to player names in the tab list and the scoreboard",
+              "sidebar ONLY -- not above the head, not in chat, not in death messages.",
+              "The club datapack used to do this with a team prefix, but a team prefix is read by",
+              "all four of those places at once, so it could not be limited to two of them.",
+              "Turning this off puts the sidebar display slots back to the club.* objectives and",
+              "lowers the flag the datapack watches, so the old look returns within a few seconds",
+              "without rebuilding anything.")
+          .push("nameLabels");
+      LABELS_ENABLED = b
+          .comment("Whether this mod owns the origin/class labels.")
+          .define("enabled", true);
+      LABELS_TAB = b
+          .comment("Put the label in the tab list (PlayerEvent.TabListNameFormat).")
+          .define("tabList", true);
+      LABELS_SIDEBAR = b
+          .comment("Put the label in the sidebar, by mirroring each club.* objective into a",
+              "view.* one whose score holders are named '[origin/class] player'. Offline players",
+              "keep their row, which is the whole point of showing this in the sidebar.")
+          .define("sidebar", true);
       b.pop();
       SPEC = b.build();
     }
