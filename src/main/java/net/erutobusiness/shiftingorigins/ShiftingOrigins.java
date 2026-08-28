@@ -57,8 +57,8 @@ public final class ShiftingOrigins {
     net.minecraftforge.common.MinecraftForge.EVENT_BUS.register(NameLabels.class);
     // ⚠ 精気吸収がアンデッドから吸えていた（上流の説明は「効かない」と書いているのに実装が無い）
     net.minecraftforge.common.MinecraftForge.EVENT_BUS.register(SiphonGuard.class);
-    // ⚠ ブレイズボーンは水筒の水を飲むと痛むのに喉は渇く。溶岩入りの瓶を彼らの水にする
-    net.minecraftforge.common.MinecraftForge.EVENT_BUS.register(LavaBottleDrink.class);
+    // ⚠ 溶岩入りの瓶（ブレイズボーンの水）は **Mixin 側**で拾う（`mixin/ItemMixin`）。
+    //   ⚠ イベントで拾うと**啜るモーションが出ない**ので、ここには登録しない。
     // ⚠ 能力名の横に自動で付く印（A / T / R）を、画面へ出る前に外す。
     //   ⚠ datapack では消せない（消しても内蔵の絵で足される）。理由は AutoBadgeStrip の説明。
     net.minecraftforge.common.MinecraftForge.EVENT_BUS.register(AutoBadgeStrip.class);

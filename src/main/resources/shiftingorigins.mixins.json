@@ -9,6 +9,7 @@
     "OrbOfOriginItemMixin",
     "SlotMixin",
     "InventoryMixin",
+    "ItemMixin",
     "LivingEntityMixin",
     "BoundTickingBlockEntityMixin"
   ],
