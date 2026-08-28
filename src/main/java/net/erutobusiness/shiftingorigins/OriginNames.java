@@ -130,6 +130,28 @@ public final class OriginNames {
     return "[" + raceName + "・" + className + "] ";
   }
 
+  /**
+   * その人の<b>種族の id</b>（`origins:blazeborn` など）。読めなければ空文字。
+   *
+   * <p>⚠ 層の id は表（`origin_names.json`）が持っている値で見る。
+   * こうすると Origins の registry key の定数を持たずに済む。
+   */
+  public static String raceId(Player player) {
+    load();
+    IOriginContainer container = IOriginContainer.get(player).resolve().orElse(null);
+    if (container == null) {
+      return "";
+    }
+    for (Map.Entry<ResourceKey<io.github.edwinmindcraft.origins.api.origin.OriginLayer>,
+        ResourceKey<io.github.edwinmindcraft.origins.api.origin.Origin>> e
+        : container.getOrigins().entrySet()) {
+      if (e.getKey().location().toString().equals(raceLayer)) {
+        return e.getValue().location().toString();
+      }
+    }
+    return "";
+  }
+
   /** 表が読めているか（検査と記録用）。 */
   public static int size() {
     load();

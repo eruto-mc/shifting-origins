@@ -13,6 +13,8 @@ Origins（種族）と Origins: Classes（職業）を、**一度きりの選択
 | **スケルトンがイヌ獣人から逃げる** | バニラがオオカミへ使っている目標を、同じ数字でスケルトンへ足す（2026-08-24 追加。下記） |
 | **人に乗っているあいだ、相手の名前札を消す** | ピクシーが頭に乗ると名前札が目の前に貼り付くので、**乗っている本人の画面からだけ**消す（2026-08-27 追加。下記） |
 | **`[種族・職業]` を Tab とサイドバーにだけ出す** | 名札・チャット・死亡メッセージには出さない（2026-08-28 追加。下記） |
+| **精気吸収をアンデッドに効かなくする** | 上流が説明に書いているのに実装していなかった除外を足す（2026-08-28 追加。下記） |
+| **ブレイズボーンが溶岩入りの瓶を飲める** | 水筒の水で痛む種族に、痛まない水源を渡す（2026-08-28 追加。下記） |
 
 ## 人に乗っているあいだ、相手の名前札を消す（2026-08-27）
 
@@ -415,3 +417,78 @@ prefix を読むのは `PlayerTeam.formatNameForTeam` で、これを呼ぶの�
 
 ⚠ **旗が無いときは datapack が今までどおり飾る**（`unless ... matches 1`）。
 MOD が入っていない世界・MOD を止めた世界では、古い見え方へ倒れる。
+
+## 精気吸収がアンデッドから吸えていた（2026-08-28）
+
+上流（Medieval Origins Revival）の説明はこう書いている:
+
+> "This affects all creatures for better or worse, **except summoned dead**."
+
+⚠ **実装に除外が1つも無い。** 3か所を開いて確かめた:
+
+| 開いた所 | 結果 |
+| - | - |
+| `revenant/siphon.json`（7,538バイト） | ⚠ 対象を絞る条件が無い。`bientity_condition` は無く、唯一の `apoli:in_tag` は**ダメージの種類**に掛かっていて、自分の吸収ダメージで再発火しないためのもの |
+| `SummonedSkeleton.class` | ⚠ `siphon` の参照 **0件**・`isInvulnerableTo` の上書き無し |
+| `SpellDamageAction.class` | ⚠ 召喚の判定 **0件**（`instanceof` は `LivingEntity` だけ） |
+
+実害は**回復し放題**——自分で呼んだゾンビを攻撃し続ければ体力が戻り続ける。
+
+### なぜ datapack でやらないか
+
+⚠ 条件そのものは data 側にも在る（`apoli:entity_group`）。ただし当てるには
+**上流の power を丸ごと写して置き直す**ことになり、7,538バイトを当部が抱えて
+上流の変更に追随できなくなる。当部の方針は「**上流の定義は書き換えない（足す／外すだけ）**」。
+
+### やり方
+
+`LivingAttackEvent`（**ダメージが入る前**）で、ダメージの種類が
+`medievalorigins:siphon` かつ相手が `MobType.UNDEAD` なら取り消す。
+
+⚠ **召喚した分だけでなくアンデッド全体**（2026-08-28・あなたの判断）。
+死んでいるものから生命力は吸えない、という筋のほう。
+
+⚠ **回復も一緒に止まる見込み**——上流は「吸収ダメージが通ったか」を見てから回復させる
+（`if_else_list` の中で `medievalorigins:spell_damage` を判定）ので、ダメージが入らなければ
+回復の枝へ進まない。⚠ **これは bytecode の読みで、実測ではない。**
+
+置き場: [`SiphonGuard`](src/main/java/net/erutobusiness/shiftingorigins/SiphonGuard.java)。
+config `siphon.skipUndead` で切れる。
+
+## ブレイズボーンが溶岩入りの瓶を飲める（2026-08-28）
+
+あの種族は `world3:damage_from_canteens`（「水は毒」）を持っていて、
+⚠ **水筒の水を飲むと 2 痛む**。一方 `world3:heat_tolerance` が面倒を見るのは**体温だけ**で、
+⚠ **喉の渇きは普通にある**。つまり「渇くのに、水を飲むと痛む」種族だった。
+
+Alex's Mobs の `alexsmobs:lava_bottle` は、**ガラス瓶を持って溶岩の源を右クリック**すると
+手に入る（bytecode で確認: `Items.GLASS_BOTTLE` ＋ 6ブロックの `raycast` ＋ `FluidTags.LAVA`、
+そして `setSecondsOnFire`）。⚠ **火が付く代償はブレイズボーンだけ無料**なので、
+これを彼らの水にした。
+
+### ⚠ タグでは飲めるようにならない
+
+Tough As Nails の飲み物はアイテムタグで決まる（`toughasnails:thirst/N_thirst_drinks`）が、
+⚠ **タグは「どれだけ回復するか」を決めているだけ**だった。
+タグに入っているのは牛乳バケツ・ポーション・TaN 自身の瓶と水筒で、**全部もともと飲める物**。
+⚠ `alexsmobs:lava_bottle` は `FoodProperties` を持たない素の `Item` なので、
+タグに足しても右クリックで何も起きない。だから `PlayerInteractEvent.RightClickItem` で拾う。
+
+### 回復量
+
+⚠ **上流の「浄水の瓶」と同じ**（タグを読んで採った・自分で決めた数字ではない）:
+
+| | 値 | 出どころ |
+| - | - | - |
+| 渇き | **5** | `toughasnails:thirst/5_thirst_drinks` に `purified_water_bottle` が居る |
+| 水分 | **80** | `toughasnails:hydration/80_hydration_drinks` に同じく居る |
+
+⚠ 満タンのときは飲まない（`ThirstHelper.canDrink`）。瓶は返す。
+
+⚠ **Tough As Nails を必須依存にした**（実行時に `toughasnails.api.thirst` を触るので、
+無い環境では右クリックした瞬間に落ちる）。`libs/toughasnails.jar` は
+`dev/instance/mods` の実物の写し——⚠ **maven にしない**。渇きの値を上流の瓶に合わせているので、
+版がずれると数字の根拠が消える。
+
+置き場: [`LavaBottleDrink`](src/main/java/net/erutobusiness/shiftingorigins/LavaBottleDrink.java)。
+config `lavaBottle.enabled` / `thirst` / `hydration`。

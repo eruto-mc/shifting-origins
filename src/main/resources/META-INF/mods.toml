@@ -54,3 +54,13 @@ factories, and the registry is synced on login.
     versionRange="[9,)"
     ordering="AFTER"
     side="BOTH"
+
+# ⚠ **必須にしてある。** LavaBottleDrink が実行時に toughasnails.api.thirst を触るので、
+#   無い環境では右クリックした瞬間に NoClassDefFoundError で落ちる。
+#   ⚠ mandatory=false にすると「入っていないと落ちる」を起動時に気づけない。
+[[dependencies.shiftingorigins]]
+    modId="toughasnails"
+    mandatory=true
+    versionRange="[9,)"
+    ordering="AFTER"
+    side="BOTH"

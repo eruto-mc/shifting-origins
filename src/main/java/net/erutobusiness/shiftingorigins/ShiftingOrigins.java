@@ -55,6 +55,10 @@ public final class ShiftingOrigins {
     // ⚠ `[種族・職業]` を Tab とサイドバーにだけ出す。名札・チャット・死亡メッセージには出さない。
     //   ⚠ 止め方は config の nameLabels.enabled（datapack 側が数秒で元へ戻る）。理由は NameLabels。
     net.minecraftforge.common.MinecraftForge.EVENT_BUS.register(NameLabels.class);
+    // ⚠ 精気吸収がアンデッドから吸えていた（上流の説明は「効かない」と書いているのに実装が無い）
+    net.minecraftforge.common.MinecraftForge.EVENT_BUS.register(SiphonGuard.class);
+    // ⚠ ブレイズボーンは水筒の水を飲むと痛むのに喉は渇く。溶岩入りの瓶を彼らの水にする
+    net.minecraftforge.common.MinecraftForge.EVENT_BUS.register(LavaBottleDrink.class);
     // ⚠ 能力名の横に自動で付く印（A / T / R）を、画面へ出る前に外す。
     //   ⚠ datapack では消せない（消しても内蔵の絵で足される）。理由は AutoBadgeStrip の説明。
     net.minecraftforge.common.MinecraftForge.EVENT_BUS.register(AutoBadgeStrip.class);
@@ -82,6 +86,10 @@ public final class ShiftingOrigins {
     public static final ForgeConfigSpec.BooleanValue LABELS_ENABLED;
     public static final ForgeConfigSpec.BooleanValue LABELS_TAB;
     public static final ForgeConfigSpec.BooleanValue LABELS_SIDEBAR;
+    public static final ForgeConfigSpec.BooleanValue SIPHON_SKIP_UNDEAD;
+    public static final ForgeConfigSpec.BooleanValue LAVA_BOTTLE_DRINK;
+    public static final ForgeConfigSpec.IntValue LAVA_BOTTLE_THIRST;
+    public static final ForgeConfigSpec.DoubleValue LAVA_BOTTLE_HYDRATION;
 
     static {
       ForgeConfigSpec.Builder b = new ForgeConfigSpec.Builder();
@@ -174,6 +182,37 @@ public final class ShiftingOrigins {
               "view.* one whose score holders are named '[origin/class] player'. Offline players",
               "keep their row, which is the whole point of showing this in the sidebar.")
           .define("sidebar", true);
+      b.pop();
+      b.comment("The revenant's Essence Extraction (medievalorigins:revenant/siphon).",
+              "Upstream's own description says it affects everything 'except summoned dead',",
+              "but there is no such exclusion anywhere in the implementation: the power JSON",
+              "carries no bientity_condition, SummonedSkeleton never mentions siphon, and",
+              "SpellDamageAction has no summon check. So a revenant can summon a zombie and",
+              "heal off it forever. This cancels the siphon damage against ALL undead, which",
+              "also stops the heal (upstream only heals after the damage lands).")
+          .push("siphon");
+      SIPHON_SKIP_UNDEAD = b
+          .comment("Whether siphon damage against undead mobs is cancelled.")
+          .define("skipUndead", true);
+      b.pop();
+      b.comment("Blazeborn drink Alex's Mobs lava bottles.",
+              "Blazeborn take 2 damage from canteen water (world3:damage_from_canteens) but",
+              "still get thirsty -- heat_tolerance only covers body temperature. A lava bottle",
+              "is made by right-clicking a lava source with a glass bottle, which sets the",
+              "player on fire; blazeborn are immune to that, so it is free for them alone.",
+              "The tag route does not work: Tough As Nails' thirst tags only say how much a",
+              "drink restores, and alexsmobs:lava_bottle is a plain Item with no use action.",
+              "The defaults match toughasnails:purified_water_bottle, read from its tags.")
+          .push("lavaBottle");
+      LAVA_BOTTLE_DRINK = b
+          .comment("Whether blazeborn can drink alexsmobs:lava_bottle.")
+          .define("enabled", true);
+      LAVA_BOTTLE_THIRST = b
+          .comment("Thirst restored. Purified water bottle is 5.")
+          .defineInRange("thirst", 5, 0, 20);
+      LAVA_BOTTLE_HYDRATION = b
+          .comment("Hydration restored. Purified water bottle is 80.")
+          .defineInRange("hydration", 80.0D, 0.0D, 100.0D);
       b.pop();
       SPEC = b.build();
     }
