@@ -1,3 +1,23 @@
+> ## ⚠⚠⚠ 2026-09-01: このリポジトリではもう作らない
+>
+> **ソースは `eruto-mc/eruto-origins/origins/src/main/java/net/erutobusiness/shiftingorigins/` へ移した。**
+>
+> ⚠⚠ **ここを直しても、部員に届く jar に1バイトも入らない。**
+> ⚠ `build_bundle.py` はこのリポジトリを見ていない（`TOP` からも `BUILT` からも外した）。
+>
+> **なぜ移したか**（依頼者の指摘）:
+> 「⚠ そもそも1つの実装にまとめていったら循環参照とかに困らない気がするけど、どういう発想なの？」
+>
+> ⚠ そのとおりで、循環参照は「実装を1つにした」から起きたのではなく、
+> ⚠⚠ **ビルドの単位を2つのまま残した**から起きていた。
+> 単位を1つにしたら、口も登録も要らなくなった。
+>
+> ⚠ **直す場所**: `eruto-mc/eruto-origins/origins/src/main/java/net/erutobusiness/shiftingorigins/`
+> ⚠ **建て方**: `eruto-origins` で `./gradlew :origins:jarJar` →
+> `py -3.12 tools/build_bundle.py --write`
+>
+> ⚠ 履歴のために残しているだけ。**下の説明は移す前のもの。**
+
 # Shifting Origins — 種族・職業を「あとから変えられる」前提に作り直す
 
 Origins（種族）と Origins: Classes（職業）を、**一度きりの選択ではなく、

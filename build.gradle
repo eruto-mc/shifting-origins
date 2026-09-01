@@ -14,6 +14,29 @@ plugins {
 
 apply plugin: 'org.spongepowered.mixin'
 
+// ⚠⚠⚠ **2026-09-01: このリポジトリではもう作らない。**
+//
+// ⚠ ソースは eruto-mc/eruto-origins/origins/src/main/java/net/erutobusiness/shiftingorigins/ へ移した。
+// ⚠⚠ **ここで建てた jar は、部員に届く物と関係が無い**（build_bundle.py は見ていない）。
+//
+// ⚠ **README に書くだけでは腐る**ので、機械が止める。
+// ⚠ 履歴を掘るために本当に建てたいときだけ、素で通す:
+//     SHIFTING_ORIGINS_BUILD_ANYWAY=1 ./gradlew build
+//
+// ⚠⚠ **置き場は `plugins {}` より後ろでないといけない**——
+//    前に置くと Gradle が「plugins の前に文を書くな」で落ち、
+//    ⚠ **逃がし弁を付けても止まる＝外せない番人**になる（2026-09-01 に1度そうした）。
+if (System.getenv('SHIFTING_ORIGINS_BUILD_ANYWAY') == null) {
+    throw new GradleException(
+        '\n' +
+        '!! このリポジトリではもう作らない（2026-09-01 に移した）。\n' +
+        '   ソース: eruto-mc/eruto-origins/origins/src/main/java/net/erutobusiness/shiftingorigins/\n' +
+        '   建て方: eruto-origins で ./gradlew :origins:jarJar\n' +
+        '           → py -3.12 tools/build_bundle.py --write\n' +
+        '   ⚠ ここで建てても、部員に届く jar には1バイトも入らない。\n' +
+        '   ⚠ 履歴を掘るために本当に建てるなら SHIFTING_ORIGINS_BUILD_ANYWAY=1 を付ける。\n')
+}
+
 version = '1.9.2'
 group = 'net.erutobusiness'
 base { archivesName = 'shifting_origins' }
