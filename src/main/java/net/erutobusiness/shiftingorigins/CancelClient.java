@@ -1,18 +1,24 @@
 package net.erutobusiness.shiftingorigins;
 
+import io.github.apace100.origins.screen.OriginSelectionCancel;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
 /**
- * クライアント側の「いま開いている選択画面はやめられるか」の印。
+ * クライアント側の「いま開いている選択画面はやめられるか」を、origins 本体へ渡す口。
  *
- * <p>この印が立っているときだけ、{@code ChooseOriginScreen} は Esc で閉じ、× ボタンを出す。
- * 立てるのはサーバー（珠を使った直後）だけ。
+ * <p>⚠⚠ <b>2026-09-01 に、実装を origins 本体へ移した</b>（依頼者の意向
+ * 「⚠ 複数の MOD や datapack に散らばってしまったものを
+ * ⚠⚠ <b>1つの MOD に1つの実装として</b>まとめれば管理もしやすくバグもなくなる」）。
  *
- * <p>⚠ **既定で立てない**のが肝。{@code /origin gui} など珠以外で開いた画面まで閉じられると、
- * 層が空のまま残って {@code hasAllOrigins()} が偽＝**無敵の状態で詰む**。
+ * <p>それまでは {@code ChooseOriginScreenMixin} が
+ * {@code io.github.apace100.origins.screen.ChooseOriginScreen} を<b>外から書き換えて</b>いた。
+ * ⚠ 1つの画面に実装が2つあり、⚠⚠ <b>両方を開かないと何が起きるか分からない</b>状態だった。
+ *
+ * <p>いまは向きが逆で、<b>origins が印と口を持ち、ここが中身を登録する</b>
+ * （{@link OriginSelectionCancel}）。⚠ 依存は片道なので循環しない。
  *
  * <p>⚠ このクラスはクライアントでしか読み込まれない（{@code Dist.CLIENT}）。
  * サーバー側から名前で触らないこと。{@link Net} は {@code DistExecutor} 越しに呼んでいる。
@@ -21,28 +27,35 @@ import net.minecraftforge.fml.common.Mod;
     bus = Mod.EventBusSubscriber.Bus.FORGE)
 public final class CancelClient {
 
-  private static boolean cancelable;
-
   private CancelClient() {
   }
 
+  /**
+   * origins 本体へ「やめると伝える中身」を渡す。
+   *
+   * <p>⚠ 呼ばれなければ origins 側は<b>何もしない口</b>のままなので、
+   * ⚠⚠ <b>この MOD を外した構成でも画面は壊れない</b>（Esc も × も出ないだけ）。
+   */
+  public static void init() {
+    OriginSelectionCancel.setSender(() -> Net.toServer(new Net.CancelRequest()));
+  }
+
   public static void set(boolean value) {
-    cancelable = value;
+    OriginSelectionCancel.set(value);
   }
 
   public static boolean isCancelable() {
-    return cancelable;
+    return OriginSelectionCancel.isCancelable();
   }
 
   /** やめると伝えて、印を下ろす。 */
   public static void requestCancel() {
-    cancelable = false;
-    Net.toServer(new Net.CancelRequest());
+    OriginSelectionCancel.requestCancel();
   }
 
   /** 選び終えた・画面が別のものに変わった等。伝えずに印だけ下ろす。 */
   public static void clear() {
-    cancelable = false;
+    OriginSelectionCancel.clear();
   }
 
   /**
@@ -50,10 +63,10 @@ public final class CancelClient {
    *
    * <p>⚠ 残したままだと、入り直したあとに {@code /origin gui} で開いた画面まで
    * Esc で閉じられてしまう。そのときサーバーには控えが無い（退場時に捨てている）ので
-   * **層が空のまま閉じる**＝無敵で詰む。両側で同時に捨てることでこれを防ぐ。
+   * <b>層が空のまま閉じる</b>＝無敵で詰む。両側で同時に捨てることでこれを防ぐ。
    */
   @SubscribeEvent
   public static void onLoggingOut(final ClientPlayerNetworkEvent.LoggingOut event) {
-    cancelable = false;
+    OriginSelectionCancel.clear();
   }
 }

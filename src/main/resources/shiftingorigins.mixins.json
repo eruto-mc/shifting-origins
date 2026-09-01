@@ -6,16 +6,13 @@
   "refmap": "shiftingorigins.refmap.json",
   "mixins": [
     "MultiMinePowerMixin",
-    "OrbOfOriginItemMixin",
     "SlotMixin",
     "InventoryMixin",
     "ItemMixin",
     "LivingEntityMixin",
     "BoundTickingBlockEntityMixin"
   ],
-  "client": [
-    "client.ChooseOriginScreenMixin"
-  ],
+  "client": [],
   "injectors": {
     "defaultRequire": 1
   }

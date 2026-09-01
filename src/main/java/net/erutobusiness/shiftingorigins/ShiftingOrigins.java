@@ -46,6 +46,28 @@ public final class ShiftingOrigins {
     net.minecraftforge.fml.ModLoadingContext.get()
         .registerConfig(ModConfig.Type.SERVER, Config.SPEC);
     Net.register();
+    // ⚠⚠ **選択画面をやめられるようにする中身を、origins 本体へ登録する**（2026-09-01）。
+    //    ⚠ 実装は origins の `ChooseOriginScreen` に畳んであり、ここは口を渡すだけ。
+    //    ⚠ 以前は mixin が外から書き換えていた（1つの画面に実装が2つ在った）。
+    //    ⚠ クライアントでしか触らない印なので `DistExecutor` 越しに呼ぶ。
+    net.minecraftforge.fml.DistExecutor.unsafeRunWhenOn(
+        net.minecraftforge.api.distmarker.Dist.CLIENT, () -> CancelClient::init);
+    // ⚠⚠ **珠を使う前後の中身も、origins 本体へ登録する**（2026-09-01）。
+    //    ⚠ 実装は origins の `OrbOfOriginItem` に畳んであり、ここは中身を渡すだけ。
+    //    ⚠ 以前は `OrbOfOriginItemMixin` が外から書き換えていた。
+    io.github.apace100.origins.content.OrbOfOriginItem.setUseListener(
+        new io.github.apace100.origins.content.OrbOfOriginItem.UseListener() {
+          @Override
+          public void beforeUse(net.minecraft.server.level.ServerPlayer player,
+              net.minecraft.world.item.ItemStack orb, boolean consumed) {
+            OriginChangeCancel.remember(player, orb, consumed);
+          }
+
+          @Override
+          public void afterUse(net.minecraft.server.level.ServerPlayer player) {
+            OriginChangeCancel.announce(player);
+          }
+        });
     net.minecraftforge.common.MinecraftForge.EVENT_BUS.register(PacedBreakQueue.class);
     net.minecraftforge.common.MinecraftForge.EVENT_BUS.register(ClassPowers.class);
     net.minecraftforge.common.MinecraftForge.EVENT_BUS.register(PotionSharing.class);
