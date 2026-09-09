@@ -44,7 +44,10 @@ factories, and the registry is synced on login.
 [[dependencies.shiftingorigins]]
     modId="origins_classes"
     mandatory=true
-    versionRange="[1.0,)"
+    # ⚠ 版で縛らない（2026-09-09）。origins-classes をソースから建てるようにした結果、
+    #   実物の版が `1.20.1-1.2.1`＝<MC版>-<MOD版> の形になった。
+    #   ⚠ Maven は先頭の数字から比べるので `[1.0,)` を満たさず、Forge が読み込みを止める。
+    versionRange="[0,)"
     ordering="AFTER"
     side="BOTH"
 
