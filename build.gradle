@@ -25,7 +25,7 @@ apply plugin: 'org.spongepowered.mixin'
 //
 // ⚠⚠ **置き場は `plugins {}` より後ろでないといけない**——
 //    前に置くと Gradle が「plugins の前に文を書くな」で落ち、
-//    ⚠ **逃がし弁を付けても止まる＝外せない番人**になる（2026-09-01 に1度そうした）。
+//    ⚠ **逃がし弁を付けても止まる＝外せないフック**になる（2026-09-01 に1度そうした）。
 if (System.getenv('SHIFTING_ORIGINS_BUILD_ANYWAY') == null) {
     throw new GradleException(
         '\n' +
