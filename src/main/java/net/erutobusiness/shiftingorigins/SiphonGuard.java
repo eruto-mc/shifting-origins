@@ -35,7 +35,7 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
  * <h2>なぜ datapack でやらないか</h2>
  *
  * ⚠ 条件そのものは data 側にも在る（{@code apoli:entity_group}）。
- * ただし当てるには<b>上流の power を丸ごと写して置き直す</b>ことになり、
+ * ただし当てるには<b>上流の power を丸ごとコピーして置き直す</b>ことになり、
  * 7,538バイトを当部が抱えて上流の変更に追随できなくなる。
  * 当部の方針は「<b>上流の定義は書き換えない（足す／外すだけ）</b>」なので、
  * ⚠ <b>ここでは damage を止める側に置いた</b>（2026-08-28・あなたの判断）。

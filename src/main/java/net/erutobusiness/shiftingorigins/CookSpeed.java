@@ -25,7 +25,7 @@ import net.minecraft.world.level.block.entity.SmokerBlockEntity;
  * 世界の他の仕掛けは一切触らない。⚠ <b>失敗しても被害が出ない側へ倒す。</b>
  *
  * <p>⚠ <b>この一覧は手で書いていない。</b>
- * 作者環境の道具（{@code list_cooking_stations}・この repo には無い）が
+ * 作者環境のツール（{@code list_cooking_stations}・この repo には無い）が
  * 「食べ物を登録している jar の、{@code RecipeManager#getRecipeFor} を呼ぶ
  * ブロックエンティティ」を機械で選んだもの（2026-08-09 時点で 31 種 / 12 MOD）。
  * <b>MOD を足したら回し直して貼り替える。</b>
@@ -43,7 +43,7 @@ public final class CookSpeed {
   private static final double RANGE = 8.0D;
 
   /**
-   * ⚠ <b>作者環境の道具 `list_cooking_stations` の出力を貼ったもの。</b>
+   * ⚠ <b>作者環境のツール `list_cooking_stations` の出力を貼ったもの。</b>
    * 手で足すときは、なぜ足したかを行末に書く。
    */
   private static final Set<String> STATIONS = Set.of(
@@ -93,7 +93,7 @@ public final class CookSpeed {
       return false;
     }
     // ⚠ **焚火を足した（2026-08-13・部長の指摘）。** 許可リストは
-    //   `list_cooking_stations.py` の出力を貼ったもので、その道具のバニラの許可は
+    //   `list_cooking_stations.py` の出力を貼ったもので、そのツールが出したバニラの許可は
     //   **燻製器だけ**だった（かまど・溶鉱炉は意図的に除外）。焚火は候補に挙がって
     //   いなかっただけで、外す判断をしたわけではない。
     // ⚠ 焚火は進み具合を**ブロックエンティティの中**（`CookingTimes`）に持ち、

@@ -87,7 +87,7 @@ dependencies {
     //   `cold_storage` は Modrinth の `tough-as-nails` を指しているが、
     //   ⚠ **こちらは instance/mods に在る実物と同じ版でコンパイルしたい**
     //   （渇きの値を上流の「浄水の瓶」に合わせているので、版がずれると数字の根拠が消える）。
-    //   写した元: dev/instance/mods/ToughAsNails-forge-1.20.1-9.2.0.171.jar
+    //   コピーした元: dev/instance/mods/ToughAsNails-forge-1.20.1-9.2.0.171.jar
     compileOnly files('libs/toughasnails.jar')
 }
 

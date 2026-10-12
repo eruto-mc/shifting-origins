@@ -88,7 +88,7 @@ Origins の `origins:scare_creepers` は在るが、datapack の中身は
 | 距離 | 6.0 ブロック | 同上（config で変えられる） |
 | 歩き / 走り | 1.0 / 1.2 | 同上 |
 
-⚠ **数字を自分で決めていない。** バニラの関係を写すのが狙いなので、独自の値を入れると前提から外れる。
+⚠ **数字を自分で決めていない。** バニラの関係をコピーするのが狙いなので、独自の値を入れると前提から外れる。
 ⚠ 対象は `AbstractSkeleton` なので**スケルトン・ストレイ・ウィザースケルトン**の3種
 （追う側が使う `#minecraft:skeletons` タグの中身と同じ）。
 ⚠ 種族の id は `world3:beastfolk_dog`。config `skeletonShy.enabled` で切れる。
@@ -457,7 +457,7 @@ MOD が入っていない世界・MOD を止めた世界では、古い見え方
 ### なぜ datapack でやらないか
 
 ⚠ 条件そのものは data 側にも在る（`apoli:entity_group`）。ただし当てるには
-**上流の power を丸ごと写して置き直す**ことになり、7,538バイトを当部が抱えて
+**上流の power を丸ごとコピーして置き直す**ことになり、7,538バイトを当部が抱えて
 上流の変更に追随できなくなる。当部の方針は「**上流の定義は書き換えない（足す／外すだけ）**」。
 
 ### やり方
@@ -507,7 +507,7 @@ Tough As Nails の飲み物はアイテムタグで決まる（`toughasnails:thi
 
 ⚠ **Tough As Nails を必須依存にした**（実行時に `toughasnails.api.thirst` を触るので、
 無い環境では右クリックした瞬間に落ちる）。`libs/toughasnails.jar` は
-`dev/instance/mods` の実物の写し——⚠ **maven にしない**。渇きの値を上流の瓶に合わせているので、
+`dev/instance/mods` の実物のコピー——⚠ **maven にしない**。渇きの値を上流の瓶に合わせているので、
 版がずれると数字の根拠が消える。
 
 置き場: [`LavaBottleDrink`](src/main/java/net/erutobusiness/shiftingorigins/LavaBottleDrink.java)。

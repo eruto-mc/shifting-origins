@@ -21,7 +21,7 @@ import org.slf4j.LoggerFactory;
  *
  * <p><b>なぜ自作なのか</b>: apoli の実体アクションには {@code area_of_effect} も
  * {@code apply_effect} もあるが、{@code apply_effect} は<b>効果を JSON に固定で書く</b>型なので、
- * 「いま飲んだポーションの効果」を動的に写せない。だから JSON だけでは書けない。
+ * 「いま飲んだポーションの効果」を動的にコピーできない。だから JSON だけでは書けない。
  *
  * <p><b>なぜ聖職者なのか</b>: 当部は 2026-08-04 に聖職者をポーション専業にした
  * （{@code better_enchanting} は EnchantingInfuser に効かず死んでいたので外した）。
